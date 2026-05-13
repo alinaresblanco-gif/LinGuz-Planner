@@ -1,0 +1,22 @@
+{
+  "name": "LinGuz Planner",
+  "short_name": "LinGuz",
+  "start_url": "/LinGuz-Planner/",
+  "scope": "/LinGuz-Planner/",
+  "display": "standalone",
+  "background_color": "#f2f6fa",
+  "theme_color": "#f2f6fa",
+  "description": "App familiar de compras, recetas, agenda y menu semanal.",
+  "icons": [
+    {
+      "src": "/LinGuz-Planner/imagenes/logo_linguz.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/LinGuz-Planner/imagenes/logo_linguz.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
