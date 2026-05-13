@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinGuz Planner</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('./imagenes/fondo-index.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .interactive-zone {
+            position: absolute;
+            border: 2px solid transparent; /* Cambiar a un color visible para depuración */
+            cursor: pointer;
+        }
+        .zone1 { top: 20%; left: 10%; width: 30%; height: 20%; }
+        .zone2 { top: 50%; left: 10%; width: 30%; height: 20%; }
+        .zone3 { top: 20%; right: 10%; width: 30%; height: 20%; }
+        .zone4 { top: 50%; right: 10%; width: 30%; height: 20%; }
+    </style>
+</head>
+<body>
+    <div class="interactive-zone zone1" onclick="location.href='./vistas/mi-lista.html'"></div>
+    <div class="interactive-zone zone2" onclick="location.href='./vistas/nuestras-recetas.html'"></div>
+    <div class="interactive-zone zone3" onclick="location.href='./vistas/nuestra-agenda.html'"></div>
+    <div class="interactive-zone zone4" onclick="location.href='./vistas/mi-menu.html'"></div>
+</body>
+</html>

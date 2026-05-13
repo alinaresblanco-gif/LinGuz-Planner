@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Familiar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            padding: 20px 16px 28px;
+            text-align: center;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        header h1 {
+            color: #fff;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 10px 22px;
+            background: rgba(255,255,255,0.25);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: 50px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            backdrop-filter: blur(4px);
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.4); transform: scale(1.04); }
+        .construction {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 24px;
+            gap: 16px;
+        }
+        .construction-icon { font-size: 4rem; }
+        .construction h2 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #f57c00;
+            text-align: center;
+        }
+        .construction p {
+            font-size: 1rem;
+            color: #78909c;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .badge {
+            background: linear-gradient(135deg, #ffa726, #ffcc02);
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(255,167,38,0.4);
+        }
+        header { background: linear-gradient(135deg, #42a5f5, #26c6da); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📅 AGENDA FAMILIAR</h1>
+        <a class="btn-back" href="../index.html">🏠 Volver al inicio</a>
+    </header>
+    <section class="construction">
+        <div class="construction-icon">🚧</div>
+        <h2>Vista en construcción</h2>
+        <p>Estamos preparando algo increíble para ti.<br>¡Pronto podréis organizar todos vuestros eventos!</p>
+        <div class="badge">PRÓXIMAMENTE</div>
+    </section>
+</body>
+</html>
