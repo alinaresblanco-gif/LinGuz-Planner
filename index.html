@@ -8,31 +8,60 @@
     <meta http-equiv="Expires" content="0">
     <title>LinGuz Planner</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background: url('./imagenes/fondo-index.png') no-repeat center center fixed;
-            background-size: cover;
+            min-height: 100vh;
+            background: #f2f6fa;
+            overflow: hidden;
         }
+
+        .index-screen {
+            position: relative;
+            width: calc(100vw - 30px);
+            max-width: 430px;
+            height: 100vh;
+            background: url('./imagenes/fondo-index.png') no-repeat center center;
+            background-size: 100% 100%;
+        }
+
         .interactive-zone {
             position: absolute;
-            border: 2px solid transparent; /* Cambiar a un color visible para depuración */
+            border: 0;
             cursor: pointer;
+            z-index: 5;
+            display: block;
+            -webkit-tap-highlight-color: transparent;
         }
-        .zone1 { top: 20%; left: 10%; width: 30%; height: 20%; }
-        .zone2 { top: 50%; left: 10%; width: 30%; height: 20%; }
-        .zone3 { top: 20%; right: 10%; width: 30%; height: 20%; }
-        .zone4 { top: 50%; right: 10%; width: 30%; height: 20%; }
+
+        .zone1,
+        .zone2,
+        .zone3,
+        .zone4 {
+            bottom: 2.8%;
+            width: 20%;
+            height: 10%;
+        }
+
+        .zone1 { left: 5%; }
+        .zone2 { left: 28.5%; }
+        .zone3 { left: 52%; }
+        .zone4 { left: 75.5%; }
     </style>
 </head>
 <body>
-    <div class="interactive-zone zone1" onclick="location.href='./vistas/mi-lista.html'"></div>
-    <div class="interactive-zone zone2" onclick="location.href='./vistas/nuestras-recetas.html'"></div>
-    <div class="interactive-zone zone3" onclick="location.href='./vistas/nuestra-agenda.html'"></div>
-    <div class="interactive-zone zone4" onclick="location.href='./vistas/mi-menu.html'"></div>
+    <main class="index-screen">
+        <a class="interactive-zone zone1" href="./vistas/mi-lista.html" aria-label="Ir a Mi lista"></a>
+        <a class="interactive-zone zone2" href="./vistas/nuestras-recetas.html" aria-label="Ir a Nuestras recetas"></a>
+        <a class="interactive-zone zone3" href="./vistas/nuestra-agenda.html" aria-label="Ir a Nuestra agenda"></a>
+        <a class="interactive-zone zone4" href="./vistas/mi-menu.html" aria-label="Ir a Mi menú"></a>
+    </main>
 </body>
 </html>
