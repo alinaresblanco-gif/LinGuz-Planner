@@ -113,6 +113,72 @@ function apiGetHogar(hogar_id) {
   return hogares.find(h => h.hogar_id === hogar_id);
 }
 
+/** API: Crear usuario nuevo + su lista privada */
+function apiCreateUsuario(hogar_id, nombre_visible, email, pin_hash) {
+  const sheetUsuarios = getSheet(SHEET_USUARIOS);
+  const sheetListas = getSheet(SHEET_LISTAS);
+  
+  // Generar user_id único
+  const baseId = "user-" + Date.now();
+  const userId = baseId;
+  
+  // Crear fila en Usuarios
+  const saltHash = "salt-" + Date.now();
+  const nowIso = new Date().toISOString();
+  const headersUsuarios = sheetUsuarios.getDataRange().getValues()[0];
+  const rowUsuarios = headersUsuarios.map(h => {
+    switch(h) {
+      case 'user_id': return userId;
+      case 'hogar_id': return hogar_id;
+      case 'nombre_visible': return nombre_visible;
+      case 'email': return email;
+      case 'rol': return 'miembro';
+      case 'auth_tipo': return 'pin';
+      case 'password_hash': return pin_hash;
+      case 'password_salt': return saltHash;
+      case 'intentos_fallidos': return 0;
+      case 'bloqueado_hasta': return '';
+      case 'ultimo_login': return '';
+      case 'creado_en': return nowIso;
+      case 'actualizado_en': return nowIso;
+      case 'estado': return 'activo';
+      default: return '';
+    }
+  });
+  sheetUsuarios.appendRow(rowUsuarios);
+  
+  // Crear lista privada en Listas
+  const listaId = "lista-" + Date.now();
+  const headersListas = sheetListas.getDataRange().getValues()[0];
+  const rowListas = headersListas.map(h => {
+    switch(h) {
+      case 'lista_id': return listaId;
+      case 'hogar_id': return hogar_id;
+      case 'tipo_lista': return 'privada';
+      case 'owner_user_id': return userId;
+      case 'nombre_lista': return 'Lista Personal ' + nombre_visible;
+      case 'creada_en': return nowIso;
+      case 'actualizada_en': return nowIso;
+      case 'estado': return 'activa';
+      default: return '';
+    }
+  });
+  sheetListas.appendRow(rowListas);
+  
+  // Registrar en Auditoria
+  apiLogAuditoria({
+    evento_id: 'evento-' + Date.now(),
+    user_id: userId,
+    accion: 'crear',
+    entidad: 'usuario',
+    entidad_id: userId,
+    detalle: 'Nuevo usuario y lista privada creados',
+    fecha_evento: nowIso
+  });
+  
+  return { ok: true, user_id: userId, lista_id: listaId };
+}
+
 function parseJsonBody(e) {
   if (!e || !e.postData || !e.postData.contents) return {};
   try {
@@ -164,6 +230,14 @@ function routeAction(action, params) {
       case 'getHogar':
         return { ok: true, data: apiGetHogar(params.hogar_id || '') || null };
 
+      case 'createUsuario':
+        return apiCreateUsuario(
+          params.hogar_id || 'hogar-001',
+          params.nombre_visible || '',
+          params.email || '',
+          params.pin_hash || ''
+        );
+
       default:
         return {
           ok: false,
@@ -179,7 +253,8 @@ function routeAction(action, params) {
             'logAuditoria',
             'getUsuario',
             'usuariosHogar',
-            'getHogar'
+            'getHogar',
+            'createUsuario'
           ]
         };
     }

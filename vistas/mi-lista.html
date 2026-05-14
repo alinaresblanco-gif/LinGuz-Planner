@@ -305,6 +305,81 @@
         @media (min-width: 900px) {
             .lists { grid-template-columns: 1fr 1fr; }
         }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1f3d32;
+            margin-bottom: 12px;
+        }
+        .modal-description {
+            font-size: 0.95rem;
+            color: #5f7a70;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-form input {
+            border: 1px solid #b7d6c1;
+            border-radius: 10px;
+            padding: 11px 12px;
+            font-size: 0.96rem;
+            font-family: 'Nunito', sans-serif;
+            background: #fff;
+            color: #1f3d32;
+        }
+        .modal-form input::placeholder {
+            color: #9db5aa;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 11px 12px;
+            border-radius: 10px;
+            border: 0;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #fff;
+        }
+        .modal-btn-create {
+            background: linear-gradient(135deg, #34a853, #2f80ed);
+        }
+        .modal-btn-cancel {
+            background: #ccc;
+            color: #333;
+        }
         header { background: linear-gradient(135deg, #66bb6a, #42a5f5); }
     </style>
 </head>
@@ -362,6 +437,22 @@
         </section>
     </main>
 
+    <div id="modalCreateUser" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Crear tu usuario</div>
+            <div class="modal-description">Ingresa tu nombre para crear tu usuario y acceder a tu lista privada.</div>
+            <div class="modal-form">
+                <input id="modalUserName" type="text" placeholder="Tu nombre (ej: Mamá)" aria-label="Nombre del usuario">
+                <input id="modalUserEmail" type="email" placeholder="Email (opcional)" aria-label="Email del usuario">
+                <input id="modalUserPin" type="password" placeholder="PIN (6 dígitos)" aria-label="PIN para acceso rápido">
+            </div>
+            <div class="modal-buttons">
+                <button id="modalBtnCreate" class="modal-btn-create" type="button">Crear Usuario</button>
+                <button id="modalBtnCancel" class="modal-btn-cancel" type="button">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const CATEGORIES = [
             "Frutería",
@@ -382,7 +473,7 @@
             "Otros"
         ];
 
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVApfgBi5LcQadxPiNtFdY7NXfFaHpphBGE2-L3OZtxIfEcm0kHf_zTwr70lQxIDGM6g/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5EYmR3j2des5bBDSviRT69m2ovjA6U9HxBfXvPnWZ_JOHGmZil3QcUIaDjJplz9_Ntg/exec";
         const SHEET_USUARIOS_URL = "https://docs.google.com/spreadsheets/d/1nOrbd3WlowaE3dk8n-WIqTobyTbITdYjCB4pyC2muAY/edit#gid=55433294";
         const DEFAULT_HOGAR_ID = "hogar-001";
         const STORAGE_USER_KEY = "linguz-shopping-user";
@@ -399,6 +490,13 @@
         const privateTitle = document.getElementById("privateTitle");
         const privateListEl = document.getElementById("privateList");
         const commonListEl = document.getElementById("commonList");
+
+        const modalCreateUser = document.getElementById("modalCreateUser");
+        const modalUserName = document.getElementById("modalUserName");
+        const modalUserEmail = document.getElementById("modalUserEmail");
+        const modalUserPin = document.getElementById("modalUserPin");
+        const modalBtnCreate = document.getElementById("modalBtnCreate");
+        const modalBtnCancel = document.getElementById("modalBtnCancel");
 
         let users = [];
         let supermarketMode = false;
@@ -787,11 +885,70 @@
         }
 
         function addUser() {
-            const openSheet = window.confirm("Los usuarios se gestionan desde Google Sheets. ¿Abrir hoja Usuarios?");
-            if (openSheet) {
-                window.open(SHEET_USUARIOS_URL, "_blank", "noopener,noreferrer");
+            modalUserName.value = "";
+            modalUserEmail.value = "";
+            modalUserPin.value = "";
+            modalUserName.focus();
+            modalCreateUser.classList.add("active");
+        }
+
+        function closeModal() {
+            modalCreateUser.classList.remove("active");
+        }
+
+        async function createUserFromModal() {
+            const name = modalUserName.value.trim();
+            const email = modalUserEmail.value.trim();
+            const pin = modalUserPin.value.trim();
+
+            if (!name) {
+                window.alert("Por favor ingresa tu nombre.");
+                return;
+            }
+
+            if (pin && !/^\d{6}$/.test(pin)) {
+                window.alert("El PIN debe tener exactamente 6 dígitos (ej: 123456).");
+                return;
+            }
+
+            const pinHash = pin ? hashPin(pin) : "default-hash-" + Date.now();
+
+            try {
+                const response = await apiPost({
+                    action: "createUsuario",
+                    hogar_id: DEFAULT_HOGAR_ID,
+                    nombre_visible: name,
+                    email: email,
+                    pin_hash: pinHash
+                });
+
+                if (!response.ok) {
+                    window.alert(response.error || "No se pudo crear el usuario.");
+                    return;
+                }
+
+                closeModal();
+                currentUserId = response.user_id;
+                localStorage.setItem(STORAGE_USER_KEY, currentUserId);
+                await loadUsersFromApi();
+                await refreshListsAndItems();
+            } catch (error) {
+                window.alert("Error creando usuario: " + String(error));
             }
         }
+
+        function hashPin(pin) {
+            let hash = 0;
+            for (let i = 0; i < pin.length; i++) {
+                const char = pin.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return "pin-" + Math.abs(hash).toString(16);
+        }
+
+        modalBtnCreate.addEventListener("click", () => { createUserFromModal().catch(showFatalError); });
+        modalBtnCancel.addEventListener("click", closeModal);
 
         userSelect.addEventListener("change", async () => {
             currentUserId = userSelect.value;
@@ -821,8 +978,18 @@
 
         async function init() {
             setupCategorySelector();
-            await loadUsersFromApi();
-            await refreshListsAndItems();
+            try {
+                await loadUsersFromApi();
+                if (!users.length) {
+                    addUser();
+                } else {
+                    await refreshListsAndItems();
+                }
+            } catch (error) {
+                console.error(error);
+                window.alert("No hay usuarios en el hogar. Crea uno para continuar.");
+                addUser();
+            }
         }
 
         init().catch(showFatalError);
