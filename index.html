@@ -213,6 +213,15 @@
             }
 
             applyZones();
+                // Registrar el service worker para forzar la actualización
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('./service-worker.js').then(reg => {
+                            // Forzar actualización inmediata
+                            reg.update();
+                        });
+                    });
+                }
         }
 
         function pointerUp(ev) {
