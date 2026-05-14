@@ -190,6 +190,25 @@
             overflow: hidden;
         }
 
+        .recipe-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+        }
+
+        .recipe-image-fallback {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            color: #c77b2c;
+        }
+
         .recipe-top {
             padding: 12px;
             display: flex;
@@ -338,6 +357,55 @@
             min-height: 90px;
             resize: vertical;
             line-height: 1.4;
+        }
+
+        .image-preview-wrap {
+            border: 1px dashed #c0d8cc;
+            border-radius: 12px;
+            background: #f8fcfa;
+            padding: 8px;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 170px;
+            object-fit: cover;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .image-preview.active {
+            display: block;
+        }
+
+        .image-preview-placeholder {
+            min-height: 90px;
+            color: #6c8a7d;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .image-actions {
+            margin-top: 8px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-remove-image {
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 1px solid #f2c3c2;
+            background: #fff;
+            color: #c23d3a;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
         }
 
         .row-2 {
@@ -502,6 +570,18 @@
                         <label for="recipeNotes">Notas familiares (opcional)</label>
                         <textarea id="recipeNotes" placeholder="Truco, version de mama, sugerencias..."></textarea>
                     </div>
+
+                    <div class="field span-2">
+                        <label for="recipeImage">Imagen de la receta (opcional)</label>
+                        <input id="recipeImage" type="file" accept="image/*">
+                        <div class="image-preview-wrap">
+                            <img id="recipeImagePreview" class="image-preview" alt="Vista previa de la receta">
+                            <div id="recipeImagePlaceholder" class="image-preview-placeholder">No hay imagen seleccionada.</div>
+                            <div class="image-actions">
+                                <button id="btnRemoveImage" class="btn-remove-image" type="button">Quitar imagen</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-actions">
@@ -558,6 +638,10 @@
         const recipeIngredients = document.getElementById("recipeIngredients");
         const recipeSteps = document.getElementById("recipeSteps");
         const recipeNotes = document.getElementById("recipeNotes");
+        const recipeImage = document.getElementById("recipeImage");
+        const recipeImagePreview = document.getElementById("recipeImagePreview");
+        const recipeImagePlaceholder = document.getElementById("recipeImagePlaceholder");
+        const btnRemoveImage = document.getElementById("btnRemoveImage");
 
         const viewModal = document.getElementById("viewModal");
         const viewTitle = document.getElementById("viewTitle");
@@ -570,6 +654,7 @@
         let recipes = loadRecipes();
         let activeCategory = "Todas";
         let editingId = "";
+        let currentImageData = "";
 
         function uid() {
             return "receta-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
@@ -589,6 +674,24 @@
 
         function saveRecipes() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+        }
+
+        function updateImagePreview(imageData) {
+            if (imageData) {
+                recipeImagePreview.src = imageData;
+                recipeImagePreview.classList.add("active");
+                recipeImagePlaceholder.style.display = "none";
+            } else {
+                recipeImagePreview.src = "";
+                recipeImagePreview.classList.remove("active");
+                recipeImagePlaceholder.style.display = "flex";
+            }
+        }
+
+        function resetImageInput() {
+            recipeImage.value = "";
+            currentImageData = "";
+            updateImagePreview("");
         }
 
         function normalize(text) {
@@ -709,6 +812,19 @@
                 const top = document.createElement("div");
                 top.className = "recipe-top";
 
+                if (recipe.imageData) {
+                    const image = document.createElement("img");
+                    image.className = "recipe-image";
+                    image.src = recipe.imageData;
+                    image.alt = "Imagen de " + recipe.name;
+                    card.appendChild(image);
+                } else {
+                    const imageFallback = document.createElement("div");
+                    imageFallback.className = "recipe-image-fallback";
+                    imageFallback.textContent = "🍲";
+                    card.appendChild(imageFallback);
+                }
+
                 const left = document.createElement("div");
                 const title = document.createElement("h3");
                 title.className = "recipe-title";
@@ -775,6 +891,7 @@
         function clearRecipeForm() {
             recipeForm.reset();
             recipeCategory.value = "Tradicional";
+            resetImageInput();
             editingId = "";
         }
 
@@ -800,6 +917,9 @@
             recipeIngredients.value = recipe.ingredients || "";
             recipeSteps.value = recipe.steps || "";
             recipeNotes.value = recipe.notes || "";
+            currentImageData = recipe.imageData || "";
+            recipeImage.value = "";
+            updateImagePreview(currentImageData);
 
             recipeModal.classList.add("active");
             recipeModal.setAttribute("aria-hidden", "false");
@@ -874,6 +994,7 @@
                         ingredients,
                         steps,
                         notes,
+                        imageData: currentImageData,
                         updatedAt: now
                     };
                 });
@@ -887,6 +1008,7 @@
                     ingredients,
                     steps,
                     notes,
+                    imageData: currentImageData,
                     createdAt: now,
                     updatedAt: now
                 });
@@ -912,6 +1034,7 @@
                     ingredients: "Patatas\nHuevos\nCebolla\nSal\nAceite de oliva",
                     steps: "Pelar y cortar patatas.\nFreir a fuego medio.\nBatir huevos, mezclar y cuajar la tortilla por ambos lados.",
                     notes: "Version de la abuela: dejar reposar 5 minutos antes de servir.",
+                    imageData: "",
                     createdAt: now,
                     updatedAt: now
                 }
@@ -926,6 +1049,38 @@
         btnCloseView.addEventListener("click", closeViewModal);
 
         searchInput.addEventListener("input", renderRecipes);
+
+        recipeImage.addEventListener("change", () => {
+            const file = recipeImage.files && recipeImage.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith("image/")) {
+                window.alert("Selecciona un archivo de imagen valido.");
+                recipeImage.value = "";
+                return;
+            }
+
+            const maxSize = 2 * 1024 * 1024;
+            if (file.size > maxSize) {
+                window.alert("La imagen es muy grande. Usa una de hasta 2 MB.");
+                recipeImage.value = "";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                currentImageData = String(reader.result || "");
+                updateImagePreview(currentImageData);
+            };
+            reader.onerror = () => {
+                window.alert("No se pudo leer la imagen.");
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnRemoveImage.addEventListener("click", () => {
+            resetImageInput();
+        });
 
         recipeModal.addEventListener("click", (event) => {
             if (event.target === recipeModal) closeRecipeModal();
