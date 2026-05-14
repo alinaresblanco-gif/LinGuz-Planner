@@ -54,7 +54,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
             padding: 14px 14px 20px;
         }
         .toolbar {
@@ -75,11 +75,34 @@
             align-items: center;
             flex-wrap: wrap;
         }
+        .row-full {
+            display: flex;
+            width: 100%;
+        }
         .user-line {
             display: grid;
             grid-template-columns: auto 1fr auto;
             gap: 8px;
             align-items: center;
+            width: 100%;
+        }
+        .product-line {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            width: 100%;
+        }
+        .product-line select {
+            min-width: 125px;
+        }
+        .add-line {
+            display: grid;
+            grid-template-columns: 65% 35%;
+            gap: 8px;
+            width: 100%;
+        }
+        .add-line select,
+        .add-line button {
             width: 100%;
         }
         .user-line label {
@@ -121,6 +144,10 @@
             cursor: pointer;
             color: #fff;
         }
+        .btn-full {
+            width: 100%;
+            min-height: 42px;
+        }
         .btn-primary { background: linear-gradient(135deg, #34a853, #2f80ed); }
         .btn-secondary { background: linear-gradient(135deg, #ff9800, #f57c00); }
         .btn-danger { background: linear-gradient(135deg, #ef5350, #e53935); }
@@ -149,6 +176,7 @@
         .clear-btn-wrap {
             display: flex;
             justify-content: center;
+            margin-top: -4px;
         }
         .btn-clear-list {
             width: min(560px, 95%);
@@ -235,6 +263,31 @@
             gap: 6px;
             flex-wrap: wrap;
             justify-content: flex-end;
+            align-items: center;
+        }
+        .check-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #2a4a3d;
+            background: #fff;
+            border: 1px solid #b7d6c1;
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+        }
+        .check-wrap input {
+            width: 15px;
+            height: 15px;
+            accent-color: #2f80ed;
+            cursor: pointer;
+        }
+        .check-wrap.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         .item.is-bought .item-name {
             text-decoration: line-through;
@@ -246,11 +299,8 @@
             text-align: center;
             padding: 8px 0;
         }
-        .voice-note {
-            font-size: 0.75rem;
-            color: #5c756a;
-            line-height: 1.4;
-            margin-top: 8px;
+        .lists {
+            margin-top: 4px;
         }
         @media (min-width: 900px) {
             .lists { grid-template-columns: 1fr 1fr; }
@@ -270,19 +320,22 @@
                 <select id="userSelect" aria-label="Seleccionar usuario"></select>
                 <button id="btnAddUser" class="btn btn-icon" type="button" aria-label="Añadir usuario" title="Añadir usuario">+</button>
             </div>
-            <div class="row">
-                <button id="btnSuper" class="btn btn-secondary" type="button">Modo Supermercado: OFF</button>
+            <div class="row-full">
+                <button id="btnSuper" class="btn btn-secondary btn-full" type="button">Modo Supermercado: OFF</button>
+            </div>
+            <div class="product-line">
                 <input id="inputProduct" class="input-product" type="text" placeholder="Añadir producto (ej: Leche)" aria-label="Nombre del producto">
                 <select id="inputCategory" aria-label="Categoría del producto"></select>
+            </div>
+            <div class="add-line">
                 <select id="inputTarget" aria-label="Destino del producto">
                     <option value="private">Lista personal</option>
                     <option value="common">Lista común</option>
                 </select>
                 <button id="btnAdd" class="btn btn-primary" type="button">Añadir</button>
-                <button id="btnVoice" class="btn btn-primary" type="button">Añadir por voz</button>
             </div>
-            <div class="voice-note">
-                Integración directa con Google Assistant/Alexa requiere servicios externos. Esta primera versión permite dictado por voz en navegadores compatibles.
+            <div class="row-full">
+                <button id="btnVoice" class="btn btn-primary btn-full" type="button">Añadir un Producto por Voz</button>
             </div>
         </section>
 
@@ -516,10 +569,23 @@
                     const actions = document.createElement("div");
                     actions.className = "item-actions";
 
-                    const toggleBtn = document.createElement("button");
-                    toggleBtn.className = "btn-ghost";
-                    toggleBtn.textContent = item.bought ? "Desmarcar" : "Marcar";
-                    toggleBtn.addEventListener("click", () => toggleBought(listType, item.id));
+                    const checkWrap = document.createElement("label");
+                    checkWrap.className = "check-wrap" + (!supermarketMode ? " disabled" : "");
+
+                    const toggleCheckbox = document.createElement("input");
+                    toggleCheckbox.type = "checkbox";
+                    toggleCheckbox.checked = Boolean(item.bought);
+                    toggleCheckbox.disabled = !supermarketMode;
+                    toggleCheckbox.title = supermarketMode
+                        ? "Marcar como comprado"
+                        : "Activa Modo Supermercado para marcar";
+                    toggleCheckbox.addEventListener("change", () => toggleBought(listType, item.id));
+
+                    const checkText = document.createElement("span");
+                    checkText.textContent = "Comprado";
+
+                    checkWrap.appendChild(toggleCheckbox);
+                    checkWrap.appendChild(checkText);
 
                     const copyBtn = document.createElement("button");
                     copyBtn.className = "btn-ghost";
@@ -536,7 +602,7 @@
                     delBtn.textContent = "Eliminar";
                     delBtn.addEventListener("click", () => deleteItem(listType, item.id));
 
-                    actions.appendChild(toggleBtn);
+                    actions.appendChild(checkWrap);
                     actions.appendChild(copyBtn);
                     actions.appendChild(moveBtn);
                     actions.appendChild(delBtn);
