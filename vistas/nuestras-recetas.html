@@ -280,6 +280,7 @@
 
         .icon-open { background: linear-gradient(135deg, #26a69a, #00897b); }
         .icon-edit { background: linear-gradient(135deg, #42a5f5, #1e88e5); }
+        .icon-print { background: linear-gradient(135deg, #9c27b0, #7b1fa2); }
         .icon-delete { background: linear-gradient(135deg, #ef5350, #e53935); }
 
         .empty {
@@ -495,6 +496,58 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        @media print {
+            * { margin: 0; padding: 0; }
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+            header, .app, .modal, .btn, .icon-btn { display: none !important; }
+            .print-recipe {
+                display: block !important;
+                width: 100%;
+                max-width: 100%;
+                background: #fff !important;
+                color: #000 !important;
+                page-break-after: always;
+            }
+            .print-recipe h1 {
+                font-size: 2rem;
+                margin-bottom: 12px;
+                text-align: center;
+                color: #1f3d32 !important;
+            }
+            .print-recipe img {
+                width: 100%;
+                max-height: 300px;
+                object-fit: cover;
+                margin-bottom: 16px;
+                border-radius: 4px;
+            }
+            .print-recipe .print-meta {
+                font-size: 0.95rem;
+                margin-bottom: 14px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #ddd;
+            }
+            .print-recipe .print-section {
+                margin-bottom: 16px;
+            }
+            .print-recipe .print-section h2 {
+                font-size: 1.2rem;
+                margin-bottom: 8px;
+                color: #1f3d32 !important;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 6px;
+            }
+            .print-recipe .print-section p {
+                font-size: 0.9rem;
+                line-height: 1.6;
+                white-space: pre-wrap;
+                color: #333 !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -597,6 +650,8 @@
             <h3 id="viewTitle" class="modal-title"></h3>
             <div id="viewMeta" class="recipe-meta"></div>
 
+            <img id="viewImage" class="recipe-image" style="display: none; margin: 10px 0; border-radius: 12px;" alt="Imagen de receta">
+
             <div class="recipe-view-block">
                 <h4>Ingredientes</h4>
                 <p id="viewIngredients"></p>
@@ -613,8 +668,27 @@
             </div>
 
             <div class="modal-actions">
+                <button id="btnPrintRecipe" class="btn" style="background: linear-gradient(135deg, #9c27b0, #7b1fa2);" type="button">🖨 Imprimir</button>
                 <button id="btnCloseView" class="btn btn-cancel" type="button">Cerrar</button>
             </div>
+        </div>
+    </div>
+
+    <div id="printContainer" style="display: none;" class="print-recipe">
+        <h1 id="printTitle"></h1>
+        <img id="printImage" style="display: none;" alt="Imagen de receta">
+        <div id="printMeta" class="print-meta"></div>
+        <div id="printIngredients" class="print-section">
+            <h2>Ingredientes</h2>
+            <p id="printIngredientsText"></p>
+        </div>
+        <div id="printSteps" class="print-section">
+            <h2>Preparacion</h2>
+            <p id="printStepsText"></p>
+        </div>
+        <div id="printNotes" class="print-section">
+            <h2>Notas</h2>
+            <p id="printNotesText"></p>
         </div>
     </div>
 
@@ -649,7 +723,9 @@
         const viewIngredients = document.getElementById("viewIngredients");
         const viewSteps = document.getElementById("viewSteps");
         const viewNotes = document.getElementById("viewNotes");
+        const viewImage = document.getElementById("viewImage");
         const btnCloseView = document.getElementById("btnCloseView");
+        const btnPrintRecipe = document.getElementById("btnPrintRecipe");
 
         let recipes = loadRecipes();
         let activeCategory = "Todas";
@@ -868,6 +944,17 @@
                 editBtn.setAttribute("aria-label", "Modificar receta");
                 editBtn.addEventListener("click", () => openRecipeModal(recipe.id));
 
+                const printBtn = document.createElement("button");
+                printBtn.type = "button";
+                printBtn.className = "icon-btn icon-print";
+                printBtn.textContent = "🖨";
+                printBtn.title = "Imprimir receta";
+                printBtn.setAttribute("aria-label", "Imprimir receta");
+                printBtn.addEventListener("click", () => {
+                    openViewModal(recipe.id);
+                    setTimeout(() => printRecipe(recipe.id), 100);
+                });
+
                 const deleteBtn = document.createElement("button");
                 deleteBtn.type = "button";
                 deleteBtn.className = "icon-btn icon-delete";
@@ -878,6 +965,7 @@
 
                 actions.appendChild(editBtn);
                 actions.appendChild(openBtn);
+                actions.appendChild(printBtn);
                 actions.appendChild(deleteBtn);
 
                 card.appendChild(top);
@@ -941,6 +1029,13 @@
             viewIngredients.textContent = splitIngredients(recipe.ingredients).join("\n") || "Sin ingredientes";
             viewSteps.textContent = recipe.steps || "Sin preparacion";
             viewNotes.textContent = recipe.notes || "Sin notas por ahora.";
+            
+            if (recipe.imageData) {
+                viewImage.src = recipe.imageData;
+                viewImage.style.display = "block";
+            } else {
+                viewImage.style.display = "none";
+            }
 
             viewModal.classList.add("active");
             viewModal.setAttribute("aria-hidden", "false");
@@ -1080,6 +1175,49 @@
 
         btnRemoveImage.addEventListener("click", () => {
             resetImageInput();
+        });
+
+        function printRecipe(recipeId) {
+            const recipe = recipes.find((item) => item.id === recipeId);
+            if (!recipe) return;
+
+            const printContainer = document.getElementById("printContainer");
+            const printTitle = document.getElementById("printTitle");
+            const printImage = document.getElementById("printImage");
+            const printMeta = document.getElementById("printMeta");
+            const printIngredientsText = document.getElementById("printIngredientsText");
+            const printStepsText = document.getElementById("printStepsText");
+            const printNotesText = document.getElementById("printNotesText");
+
+            printTitle.textContent = recipe.name;
+            printMeta.innerHTML = "<span><strong>Categoria:</strong> " + (recipe.category || "Otro") + "</span> | <span><strong>Tiempo:</strong> " + (recipe.time ? (recipe.time + " min") : "N/D") + "</span> | <span><strong>Raciones:</strong> " + (recipe.servings || "N/D") + "</span>";
+            printIngredientsText.textContent = splitIngredients(recipe.ingredients).join("\n") || "Sin ingredientes";
+            printStepsText.textContent = recipe.steps || "Sin preparacion";
+            printNotesText.textContent = recipe.notes || "Sin notas por ahora.";
+
+            if (recipe.imageData) {
+                printImage.src = recipe.imageData;
+                printImage.style.display = "block";
+            } else {
+                printImage.style.display = "none";
+            }
+
+            printContainer.style.display = "block";
+            window.print();
+            printContainer.style.display = "none";
+        }
+
+        btnPrintRecipe.addEventListener("click", () => {
+            const recipe = recipes.find((item) => item.id === viewTitle.textContent);
+            if (!recipe) {
+                recipes.forEach((r) => {
+                    if (r.name === viewTitle.textContent) {
+                        printRecipe(r.id);
+                    }
+                });
+            } else {
+                printRecipe(recipe.id);
+            }
         });
 
         recipeModal.addEventListener("click", (event) => {
