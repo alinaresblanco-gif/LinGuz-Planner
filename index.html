@@ -246,6 +246,13 @@
         if ("serviceWorker" in navigator) {
             let reloading = false;
 
+            const refreshRegistration = async () => {
+                const registration = await navigator.serviceWorker.getRegistration("./");
+                if (registration) {
+                    await registration.update();
+                }
+            };
+
             navigator.serviceWorker.addEventListener("controllerchange", () => {
                 if (reloading) return;
                 reloading = true;
@@ -254,10 +261,20 @@
 
             window.addEventListener("load", async () => {
                 try {
-                    const registration = await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
-                    await registration.update();
+                    await navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
+                    await refreshRegistration();
                 } catch (error) {
                     console.error("No se pudo registrar el service worker", error);
+                }
+            });
+
+            window.addEventListener("pageshow", () => {
+                refreshRegistration().catch(() => {});
+            });
+
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible") {
+                    refreshRegistration().catch(() => {});
                 }
             });
         }
