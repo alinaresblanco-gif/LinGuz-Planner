@@ -197,7 +197,7 @@
         }
 
         function pointerDown(ev) {
-            if (!editModeEl.checked) return;
+            if (!editModeEl || !editModeEl.checked) return;
 
             const target = ev.currentTarget;
             const zoneId = target.dataset.zone;
@@ -248,15 +248,19 @@
             drag = null;
         }
 
-        editModeEl.addEventListener("change", () => {
-            screenEl.classList.toggle("adjust-mode", editModeEl.checked);
-        });
+        if (editModeEl) {
+            editModeEl.addEventListener("change", () => {
+                screenEl.classList.toggle("adjust-mode", editModeEl.checked);
+            });
+        }
 
-        resetBtn.addEventListener("click", () => {
-            zones = JSON.parse(JSON.stringify(defaults));
-            saveZones();
-            applyZones();
-        });
+        if (resetBtn) {
+            resetBtn.addEventListener("click", () => {
+                zones = JSON.parse(JSON.stringify(defaults));
+                saveZones();
+                applyZones();
+            });
+        }
 
         zoneEls.forEach((el) => {
             const id = el.dataset.zone;
@@ -272,7 +276,7 @@
             }
 
             el.addEventListener("click", (ev) => {
-                if (editModeEl.checked) ev.preventDefault();
+                if (editModeEl && editModeEl.checked) ev.preventDefault();
             });
             el.addEventListener("pointerdown", pointerDown);
             el.addEventListener("pointermove", pointerMove);
