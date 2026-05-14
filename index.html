@@ -68,32 +68,6 @@
                 );
         }
 
-        .controls {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 20;
-            display: none;
-            gap: 8px;
-            align-items: center;
-            padding: 8px 10px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(0, 0, 0, 0.12);
-            font-family: Arial, sans-serif;
-            font-size: 13px;
-        }
-
-        .controls button {
-            border: 1px solid #8aa0b2;
-            border-radius: 8px;
-            background: #ffffff;
-            padding: 5px 9px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
         .interactive-zone {
             position: absolute;
             border: 0;
@@ -117,33 +91,9 @@
         .zone3 { left: 52%; }
         .zone4 { left: 75.5%; }
 
-        .index-screen.adjust-mode .interactive-zone {
-            border: 2px dashed #ff9800;
-            background: rgba(255, 193, 7, 0.2);
-            touch-action: none;
-        }
-
-        .index-screen.adjust-mode .interactive-zone::after {
-            content: "";
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            width: 16px;
-            height: 16px;
-            background: #ff9800;
-            border-top-left-radius: 6px;
-        }
     </style>
 </head>
 <body>
-    <div class="controls">
-        <label>
-            <input type="checkbox" id="editMode">
-            Modo ajuste
-        </label>
-        <button id="resetZones" type="button">Reiniciar zonas</button>
-    </div>
-
     <main class="index-screen">
         <a class="interactive-zone zone1" data-zone="zone1" href="./vistas/mi-lista.html" aria-label="Ir a Mi lista"></a>
         <a class="interactive-zone zone2" data-zone="zone2" href="./vistas/nuestras-recetas.html" aria-label="Ir a Nuestras recetas"></a>
@@ -153,9 +103,6 @@
 
     <script>
         const STORAGE_KEY = "linguz-zones";
-        const screenEl = document.querySelector(".index-screen");
-        const editModeEl = document.getElementById("editMode");
-        const resetBtn = document.getElementById("resetZones");
         const zoneEls = [...document.querySelectorAll(".interactive-zone")];
 
         const defaults = {
@@ -166,7 +113,6 @@
         };
 
         let zones = loadZones();
-        let drag = null;
 
         function loadZones() {
             const raw = localStorage.getItem(STORAGE_KEY);
@@ -187,6 +133,11 @@
             return Math.min(max, Math.max(min, value));
         }
 
+        function toNumber(value, fallback) {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : fallback;
+        }
+
         function applyZones() {
             zoneEls.forEach((el) => {
                 const id = el.dataset.zone;
@@ -198,77 +149,21 @@
             });
         }
 
-        function pointerDown(ev) {
-            if (!editModeEl.checked) return;
-
-            const target = ev.currentTarget;
-            const zoneId = target.dataset.zone;
-            const rect = target.getBoundingClientRect();
-            const screenRect = screenEl.getBoundingClientRect();
-            const nearResize =
-                ev.clientX >= rect.right - 24 &&
-                ev.clientY >= rect.bottom - 24;
-
-            drag = {
-                zoneId,
-                pointerId: ev.pointerId,
-                mode: nearResize ? "resize" : "move",
-                startX: ev.clientX,
-                startY: ev.clientY,
-                start: { ...zones[zoneId] },
-                screenWidth: screenRect.width,
-                screenHeight: screenRect.height
-            };
-
-            target.setPointerCapture(ev.pointerId);
-            ev.preventDefault();
-        }
-
-        function pointerMove(ev) {
-            if (!drag || ev.pointerId !== drag.pointerId) return;
-
-            const dxPx = ev.clientX - drag.startX;
-            const dyPx = ev.clientY - drag.startY;
-            const dxPct = (dxPx / drag.screenWidth) * 100;
-            const dyPct = (dyPx / drag.screenHeight) * 100;
-            const z = zones[drag.zoneId];
-
-            if (drag.mode === "resize") {
-                z.width = clamp(drag.start.width + dxPct, 5, 95 - drag.start.left);
-                z.height = clamp(drag.start.height - dyPct, 4, 100 - drag.start.bottom);
-            } else {
-                z.left = clamp(drag.start.left + dxPct, 0, 100 - drag.start.width);
-                z.bottom = clamp(drag.start.bottom - dyPct, 0, 100 - drag.start.height);
-            }
-
-            applyZones();
-        }
-
-        function pointerUp(ev) {
-            if (!drag || ev.pointerId !== drag.pointerId) return;
-            saveZones();
-            drag = null;
-        }
-
-        editModeEl.addEventListener("change", () => {
-            screenEl.classList.toggle("adjust-mode", editModeEl.checked);
-        });
-
-        resetBtn.addEventListener("click", () => {
-            zones = JSON.parse(JSON.stringify(defaults));
-            saveZones();
-            applyZones();
-        });
-
         zoneEls.forEach((el) => {
-            el.addEventListener("click", (ev) => {
-                if (editModeEl.checked) ev.preventDefault();
-            });
-            el.addEventListener("pointerdown", pointerDown);
-            el.addEventListener("pointermove", pointerMove);
-            el.addEventListener("pointerup", pointerUp);
-            el.addEventListener("pointercancel", pointerUp);
+            const id = el.dataset.zone;
+            const z = zones[id];
+
+            if (!z) {
+                zones[id] = { ...defaults[id] };
+            } else {
+                z.left = clamp(toNumber(z.left, defaults[id].left), 0, 95);
+                z.bottom = clamp(toNumber(z.bottom, defaults[id].bottom), 0, 96);
+                z.width = clamp(toNumber(z.width, defaults[id].width), 5, 95 - z.left);
+                z.height = clamp(toNumber(z.height, defaults[id].height), 4, 100 - z.bottom);
+            }
         });
+
+        saveZones();
 
         applyZones();
 
