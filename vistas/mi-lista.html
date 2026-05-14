@@ -677,8 +677,23 @@
 
         async function loadUsersFromApi() {
             const response = await apiGet("usuariosHogar", { hogar_id: DEFAULT_HOGAR_ID });
-            if (!response.ok || !Array.isArray(response.data) || !response.data.length) {
-                throw new Error("No se han encontrado usuarios activos en la hoja Usuarios.");
+            
+            // Si no hay usuarios aún, devolvemos array vacío (no es error)
+            if (!response.ok) {
+                throw new Error("Error al cargar usuarios: " + (response.error || "respuesta inválida"));
+            }
+            
+            if (!Array.isArray(response.data)) {
+                users = [];
+                userSelect.innerHTML = '<option value="">-- Sin usuarios aún --</option>';
+                return;
+            }
+
+            // Si hay datos pero está vacío, también es válido (primera ejecución)
+            if (response.data.length === 0) {
+                users = [];
+                userSelect.innerHTML = '<option value="">-- Sin usuarios aún --</option>';
+                return;
             }
 
             users = response.data.map((u) => ({

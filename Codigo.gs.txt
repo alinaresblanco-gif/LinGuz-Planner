@@ -239,6 +239,19 @@ function jsonResponse(payload) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function addCorsHeaders(output) {
+  output.addHeader('Access-Control-Allow-Origin', '*');
+  output.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+  return output;
+}
+
+function doOptions(e) {
+  let output = ContentService.createTextOutput('');
+  output = addCorsHeaders(output);
+  return output;
+}
+
 function routeAction(action, params) {
   try {
     switch (action) {
@@ -311,11 +324,13 @@ function routeAction(action, params) {
 function doGet(e) {
   const params = (e && e.parameter) ? e.parameter : {};
   const action = params.action || 'health';
-  return jsonResponse(routeAction(action, params));
+  let output = jsonResponse(routeAction(action, params));
+  return addCorsHeaders(output);
 }
 
 function doPost(e) {
   const body = parseJsonBody(e);
   const action = body.action || 'health';
-  return jsonResponse(routeAction(action, body));
+  let output = jsonResponse(routeAction(action, body));
+  return addCorsHeaders(output);
 }
