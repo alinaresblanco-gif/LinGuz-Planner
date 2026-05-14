@@ -240,9 +240,8 @@ function jsonResponse(payload) {
 }
 
 function addCorsHeaders(output) {
-  output.addHeader('Access-Control-Allow-Origin', '*');
-  output.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  output.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // En Apps Script Web App, TextOutput no soporta addHeader.
+  // Se devuelve la respuesta sin mutarla para evitar errores de ejecucion.
   return output;
 }
 
@@ -330,7 +329,10 @@ function doGet(e) {
 
 function doPost(e) {
   const body = parseJsonBody(e);
-  const action = body.action || 'health';
-  let output = jsonResponse(routeAction(action, body));
+  const params = (body && Object.keys(body).length > 0)
+    ? body
+    : ((e && e.parameter) ? e.parameter : {});
+  const action = params.action || 'health';
+  let output = jsonResponse(routeAction(action, params));
   return addCorsHeaders(output);
 }
