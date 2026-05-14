@@ -1,0 +1,201 @@
+// LinGuz Planner - Apps Script API para Google Sheets
+// Conecta la web con las hojas: Usuarios, Listas, Items, Hogares, Sesiones, Auditoria
+// Autor: GitHub Copilot (GPT-4.1)
+
+/** CONFIGURACIÓN: Pega aquí el ID de tu Google Sheet */
+const SPREADSHEET_ID = '1nOrbd3WlowaE3dk8n-WIqTobyTbITdYjCB4pyC2muAY';
+
+/** Nombres de las hojas */
+const SHEET_USUARIOS = 'Usuarios';
+const SHEET_LISTAS = 'Listas';
+const SHEET_ITEMS = 'Items';
+const SHEET_HOGARES = 'Hogares';
+const SHEET_SESIONES = 'Sesiones';
+const SHEET_AUDITORIA = 'Auditoria';
+
+/** Utilidad: Obtener hoja por nombre */
+function getSheet(name) {
+  return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(name);
+}
+
+/** Utilidad: Leer toda la hoja como array de objetos */
+function readSheet(name) {
+  const sheet = getSheet(name);
+  const data = sheet.getDataRange().getValues();
+  const headers = data.shift();
+  return data.map(row => Object.fromEntries(headers.map((h, i) => [h, row[i]])));
+}
+
+/** Utilidad: Buscar usuario por nombre_visible o email */
+function findUsuario(query) {
+  const usuarios = readSheet(SHEET_USUARIOS);
+  return usuarios.find(u => u.nombre_visible === query || u.email === query);
+}
+
+/** API: Login por nombre_visible y PIN (hash) */
+function apiLoginUsuario(nombre_visible, pin_hash) {
+  const usuarios = readSheet(SHEET_USUARIOS);
+  const user = usuarios.find(u => u.nombre_visible === nombre_visible && u.password_hash === pin_hash && u.estado === 'activo');
+  if (!user) return { ok: false, error: 'Usuario o PIN incorrecto' };
+  return { ok: true, user };
+}
+
+/** API: Obtener listas de un usuario */
+function apiListasUsuario(user_id) {
+  const listas = readSheet(SHEET_LISTAS);
+  return listas.filter(l => (l.tipo_lista === 'comun') || (l.tipo_lista === 'privada' && l.owner_user_id === user_id));
+}
+
+/** API: Obtener items de una lista */
+function apiItemsLista(lista_id) {
+  const items = readSheet(SHEET_ITEMS);
+  return items.filter(it => it.lista_id === lista_id && it.eliminado !== 'true');
+}
+
+/** API: Añadir item a una lista */
+function apiAddItem(item) {
+  const sheet = getSheet(SHEET_ITEMS);
+  const headers = sheet.getDataRange().getValues()[0];
+  const row = headers.map(h => item[h] || '');
+  sheet.appendRow(row);
+  return { ok: true };
+}
+
+/** API: Marcar item como comprado/no comprado */
+function apiSetItemComprado(item_id, comprado, user_id) {
+  const sheet = getSheet(SHEET_ITEMS);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idx = data.findIndex(r => r[headers.indexOf('item_id')] === item_id);
+  if (idx < 1) return { ok: false, error: 'No encontrado' };
+  sheet.getRange(idx+1+1, headers.indexOf('comprado')+1).setValue(comprado ? 'true' : 'false');
+  sheet.getRange(idx+1+1, headers.indexOf('comprado_por_user_id')+1).setValue(user_id);
+  sheet.getRange(idx+1+1, headers.indexOf('comprado_en')+1).setValue(new Date());
+  return { ok: true };
+}
+
+/** API: Eliminar item (marcar eliminado) */
+function apiDeleteItem(item_id, user_id) {
+  const sheet = getSheet(SHEET_ITEMS);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idx = data.findIndex(r => r[headers.indexOf('item_id')] === item_id);
+  if (idx < 1) return { ok: false, error: 'No encontrado' };
+  sheet.getRange(idx+1+1, headers.indexOf('eliminado')+1).setValue('true');
+  sheet.getRange(idx+1+1, headers.indexOf('actualizado_en')+1).setValue(new Date());
+  return { ok: true };
+}
+
+/** API: Registrar evento en Auditoria */
+function apiLogAuditoria(evento) {
+  const sheet = getSheet(SHEET_AUDITORIA);
+  const headers = sheet.getDataRange().getValues()[0];
+  const row = headers.map(h => evento[h] || '');
+  sheet.appendRow(row);
+  return { ok: true };
+}
+
+/** API: Obtener datos de usuario por ID */
+function apiGetUsuario(user_id) {
+  const usuarios = readSheet(SHEET_USUARIOS);
+  return usuarios.find(u => u.user_id === user_id);
+}
+
+/** API: Obtener todos los usuarios activos de un hogar */
+function apiUsuariosHogar(hogar_id) {
+  const usuarios = readSheet(SHEET_USUARIOS);
+  return usuarios.filter(u => u.hogar_id === hogar_id && u.estado === 'activo');
+}
+
+/** API: Obtener datos de un hogar */
+function apiGetHogar(hogar_id) {
+  const hogares = readSheet(SHEET_HOGARES);
+  return hogares.find(h => h.hogar_id === hogar_id);
+}
+
+function parseJsonBody(e) {
+  if (!e || !e.postData || !e.postData.contents) return {};
+  try {
+    return JSON.parse(e.postData.contents);
+  } catch (error) {
+    return {};
+  }
+}
+
+function jsonResponse(payload) {
+  return ContentService
+    .createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function routeAction(action, params) {
+  try {
+    switch (action) {
+      case 'health':
+        return { ok: true, service: 'LinGuz Planner API', ts: new Date().toISOString() };
+
+      case 'loginUsuario':
+        return apiLoginUsuario(params.nombre_visible || '', params.pin_hash || '');
+
+      case 'listasUsuario':
+        return { ok: true, data: apiListasUsuario(params.user_id || '') };
+
+      case 'itemsLista':
+        return { ok: true, data: apiItemsLista(params.lista_id || '') };
+
+      case 'addItem':
+        return apiAddItem(params.item || {});
+
+      case 'setItemComprado':
+        return apiSetItemComprado(params.item_id || '', Boolean(params.comprado), params.user_id || '');
+
+      case 'deleteItem':
+        return apiDeleteItem(params.item_id || '', params.user_id || '');
+
+      case 'logAuditoria':
+        return apiLogAuditoria(params.evento || {});
+
+      case 'getUsuario':
+        return { ok: true, data: apiGetUsuario(params.user_id || '') || null };
+
+      case 'usuariosHogar':
+        return { ok: true, data: apiUsuariosHogar(params.hogar_id || '') };
+
+      case 'getHogar':
+        return { ok: true, data: apiGetHogar(params.hogar_id || '') || null };
+
+      default:
+        return {
+          ok: false,
+          error: 'Accion no soportada',
+          allowed: [
+            'health',
+            'loginUsuario',
+            'listasUsuario',
+            'itemsLista',
+            'addItem',
+            'setItemComprado',
+            'deleteItem',
+            'logAuditoria',
+            'getUsuario',
+            'usuariosHogar',
+            'getHogar'
+          ]
+        };
+    }
+  } catch (error) {
+    return { ok: false, error: String(error) };
+  }
+}
+
+function doGet(e) {
+  const params = (e && e.parameter) ? e.parameter : {};
+  const action = params.action || 'health';
+  return jsonResponse(routeAction(action, params));
+}
+
+function doPost(e) {
+  const body = parseJsonBody(e);
+  const action = body.action || 'health';
+  return jsonResponse(routeAction(action, body));
+}

@@ -382,17 +382,10 @@
             "Otros"
         ];
 
-        const DEFAULT_USERS = [
-            { id: "linguz-mama", name: "Mamá" },
-            { id: "linguz-papa", name: "Papá" },
-            { id: "linguz-hija", name: "Hija" },
-            { id: "linguz-hijo", name: "Hijo" }
-        ];
-
-        const STORAGE_USERS_KEY = "linguz-shopping-users";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVApfgBi5LcQadxPiNtFdY7NXfFaHpphBGE2-L3OZtxIfEcm0kHf_zTwr70lQxIDGM6g/exec";
+        const SHEET_USUARIOS_URL = "https://docs.google.com/spreadsheets/d/1nOrbd3WlowaE3dk8n-WIqTobyTbITdYjCB4pyC2muAY/edit#gid=55433294";
+        const DEFAULT_HOGAR_ID = "hogar-001";
         const STORAGE_USER_KEY = "linguz-shopping-user";
-        const STORAGE_PRIVATE_PREFIX = "linguz-shopping-private-";
-        const STORAGE_COMMON_KEY = "linguz-shopping-common";
 
         const userSelect = document.getElementById("userSelect");
         const inputProduct = document.getElementById("inputProduct");
@@ -407,109 +400,43 @@
         const privateListEl = document.getElementById("privateList");
         const commonListEl = document.getElementById("commonList");
 
-        let users = loadUsers();
+        let users = [];
         let supermarketMode = false;
-        let currentUserId = localStorage.getItem(STORAGE_USER_KEY) || users[0].id;
+        let currentUserId = localStorage.getItem(STORAGE_USER_KEY) || "";
 
-        function uid() {
-            return "id-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+        let privateListId = "";
+        let commonListId = "";
+        let privateItems = [];
+        let commonItems = [];
+
+        function uid(prefix) {
+            return prefix + "-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
         }
 
-        function slugifyName(name) {
-            return name
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/^-+|-+$/g, "")
-                .slice(0, 24);
+        function isTrue(value) {
+            return String(value).toLowerCase() === "true";
         }
 
-        function loadUsers() {
-            const raw = localStorage.getItem(STORAGE_USERS_KEY);
-            if (!raw) return [...DEFAULT_USERS];
-            try {
-                const parsed = JSON.parse(raw);
-                if (!Array.isArray(parsed) || !parsed.length) return [...DEFAULT_USERS];
-                return parsed.filter((u) => u && u.id && u.name);
-            } catch {
-                return [...DEFAULT_USERS];
-            }
+        async function apiGet(action, params = {}) {
+            const query = new URLSearchParams({ action, ...params }).toString();
+            const response = await fetch(APPS_SCRIPT_URL + "?" + query, { method: "GET" });
+            if (!response.ok) throw new Error("Error HTTP " + response.status);
+            return response.json();
         }
 
-        function saveUsers() {
-            localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(users));
+        async function apiPost(payload) {
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error("Error HTTP " + response.status);
+            return response.json();
         }
 
         function getUserName(userId) {
             const user = users.find((u) => u.id === userId);
             return user ? user.name : "Usuario";
-        }
-
-        function addUser() {
-            const name = (window.prompt("Nombre del nuevo usuario:") || "").trim();
-            if (!name) return;
-
-            const baseId = "linguz-" + slugifyName(name);
-            if (!baseId || baseId === "linguz-") {
-                window.alert("Nombre no válido.");
-                return;
-            }
-
-            const duplicateName = users.some((u) => u.name.toLowerCase() === name.toLowerCase());
-            if (duplicateName) {
-                window.alert("Ese usuario ya existe.");
-                return;
-            }
-
-            let finalId = baseId;
-            let suffix = 2;
-            while (users.some((u) => u.id === finalId)) {
-                finalId = baseId + "-" + suffix;
-                suffix += 1;
-            }
-
-            users.push({ id: finalId, name });
-            saveUsers();
-            currentUserId = finalId;
-            localStorage.setItem(STORAGE_USER_KEY, currentUserId);
-            setupSelectors();
-            renderAll();
-        }
-
-        function loadList(key) {
-            const raw = localStorage.getItem(key);
-            if (!raw) return [];
-            try {
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [];
-            } catch {
-                return [];
-            }
-        }
-
-        function saveList(key, data) {
-            localStorage.setItem(key, JSON.stringify(data));
-        }
-
-        function getPrivateKey(userId) {
-            return STORAGE_PRIVATE_PREFIX + userId;
-        }
-
-        function getPrivateList() {
-            return loadList(getPrivateKey(currentUserId));
-        }
-
-        function setPrivateList(data) {
-            saveList(getPrivateKey(currentUserId), data);
-        }
-
-        function getCommonList() {
-            return loadList(STORAGE_COMMON_KEY);
-        }
-
-        function setCommonList(data) {
-            saveList(STORAGE_COMMON_KEY, data);
         }
 
         function sortForMarket(items) {
@@ -521,12 +448,21 @@
             CATEGORIES.forEach((cat) => { groups[cat] = []; });
 
             items.forEach((item) => {
-                const category = CATEGORIES.includes(item.category) ? item.category : "Despensa";
-                if (!groups[category]) groups[category] = [];
+                const category = CATEGORIES.includes(item.category) ? item.category : "Otros";
                 groups[category].push(item);
             });
 
             return groups;
+        }
+
+        function mapApiItem(item) {
+            return {
+                id: String(item.item_id || ""),
+                name: String(item.nombre_producto || ""),
+                category: String(item.categoria || "Otros"),
+                bought: isTrue(item.comprado),
+                raw: item
+            };
         }
 
         function renderList(items, listType) {
@@ -534,8 +470,7 @@
             const root = listType === "private" ? privateListEl : commonListEl;
             root.innerHTML = "";
 
-            const hasAny = items.length > 0;
-            if (!hasAny) {
+            if (!items.length) {
                 root.innerHTML = '<p class="muted">Sin productos por ahora.</p>';
                 return;
             }
@@ -576,12 +511,12 @@
 
                     const toggleCheckbox = document.createElement("input");
                     toggleCheckbox.type = "checkbox";
-                    toggleCheckbox.checked = Boolean(item.bought);
+                    toggleCheckbox.checked = item.bought;
                     toggleCheckbox.disabled = !supermarketMode;
                     toggleCheckbox.title = supermarketMode
                         ? "Marcar como comprado"
                         : "Activa Modo Supermercado para marcar";
-                    toggleCheckbox.addEventListener("change", () => toggleBought(listType, item.id));
+                    toggleCheckbox.addEventListener("change", () => toggleBought(listType, item.id, item.bought));
 
                     const checkText = document.createElement("span");
                     checkText.textContent = "Comprado";
@@ -602,7 +537,7 @@
                     const delBtn = document.createElement("button");
                     delBtn.className = "btn-ghost";
                     delBtn.textContent = "Eliminar";
-                    delBtn.addEventListener("click", () => deleteItem(listType, item.id));
+                    delBtn.addEventListener("click", () => deleteItem(item.id));
 
                     actions.appendChild(checkWrap);
                     actions.appendChild(copyBtn);
@@ -620,105 +555,210 @@
 
         function renderAll() {
             privateTitle.textContent = "Lista personal de " + getUserName(currentUserId);
-            renderList(getPrivateList(), "private");
-            renderList(getCommonList(), "common");
+            renderList(privateItems, "private");
+            renderList(commonItems, "common");
             btnSuper.textContent = "Modo Supermercado: " + (supermarketMode ? "ON" : "OFF");
         }
 
-        function addItem() {
+        async function loadUsersFromApi() {
+            const response = await apiGet("usuariosHogar", { hogar_id: DEFAULT_HOGAR_ID });
+            if (!response.ok || !Array.isArray(response.data) || !response.data.length) {
+                throw new Error("No se han encontrado usuarios activos en la hoja Usuarios.");
+            }
+
+            users = response.data.map((u) => ({
+                id: String(u.user_id),
+                name: String(u.nombre_visible || u.user_id)
+            }));
+
+            if (!users.some((u) => u.id === currentUserId)) {
+                currentUserId = users[0].id;
+                localStorage.setItem(STORAGE_USER_KEY, currentUserId);
+            }
+
+            userSelect.innerHTML = "";
+            users.forEach((user) => {
+                const option = document.createElement("option");
+                option.value = user.id;
+                option.textContent = user.name;
+                userSelect.appendChild(option);
+            });
+            userSelect.value = currentUserId;
+        }
+
+        function setupCategorySelector() {
+            inputCategory.innerHTML = "";
+            CATEGORIES.forEach((category) => {
+                const option = document.createElement("option");
+                option.value = category;
+                option.textContent = category;
+                inputCategory.appendChild(option);
+            });
+            inputCategory.value = "Despensa";
+        }
+
+        async function refreshListsAndItems() {
+            const listsResponse = await apiGet("listasUsuario", { user_id: currentUserId });
+            if (!listsResponse.ok || !Array.isArray(listsResponse.data)) {
+                throw new Error("No se pudieron cargar las listas del usuario.");
+            }
+
+            const lists = listsResponse.data;
+            const privateList = lists.find((l) => l.tipo_lista === "privada" && l.owner_user_id === currentUserId);
+            const commonList = lists.find((l) => l.tipo_lista === "comun");
+
+            privateListId = privateList ? String(privateList.lista_id) : "";
+            commonListId = commonList ? String(commonList.lista_id) : "";
+
+            const [privateResponse, commonResponse] = await Promise.all([
+                privateListId ? apiGet("itemsLista", { lista_id: privateListId }) : Promise.resolve({ ok: true, data: [] }),
+                commonListId ? apiGet("itemsLista", { lista_id: commonListId }) : Promise.resolve({ ok: true, data: [] })
+            ]);
+
+            privateItems = (privateResponse.data || []).map(mapApiItem);
+            commonItems = (commonResponse.data || []).map(mapApiItem);
+            renderAll();
+        }
+
+        async function addItem() {
             const name = inputProduct.value.trim();
             if (!name) return;
 
-            const newItem = {
-                id: uid(),
-                name,
-                category: inputCategory.value,
-                bought: false,
-                createdAt: Date.now()
+            const targetListId = inputTarget.value === "private" ? privateListId : commonListId;
+            if (!targetListId) {
+                window.alert("No existe esa lista en la hoja Listas para el usuario seleccionado.");
+                return;
+            }
+
+            const nowIso = new Date().toISOString();
+            const payload = {
+                action: "addItem",
+                item: {
+                    item_id: uid("item"),
+                    lista_id: targetListId,
+                    nombre_producto: name,
+                    categoria: inputCategory.value,
+                    cantidad: "",
+                    unidad: "",
+                    comprado: "false",
+                    comprado_en: "",
+                    comprado_por_user_id: "",
+                    orden_supermercado: "",
+                    notas: "",
+                    creado_por_user_id: currentUserId,
+                    creado_en: nowIso,
+                    actualizado_en: nowIso,
+                    eliminado: "false"
+                }
             };
 
-            if (inputTarget.value === "private") {
-                const list = getPrivateList();
-                list.push(newItem);
-                setPrivateList(list);
-            } else {
-                const list = getCommonList();
-                list.push(newItem);
-                setCommonList(list);
+            const response = await apiPost(payload);
+            if (!response.ok) {
+                window.alert(response.error || "No se pudo añadir el producto.");
+                return;
             }
 
             inputProduct.value = "";
             inputProduct.focus();
-            renderAll();
+            await refreshListsAndItems();
         }
 
-        function toggleBought(listType, itemId) {
+        async function toggleBought(listType, itemId, currentValue) {
             if (!supermarketMode) return;
 
-            const getList = listType === "private" ? getPrivateList : getCommonList;
-            const setList = listType === "private" ? setPrivateList : setCommonList;
-
-            const list = getList();
-            const updated = list.map((item) => {
-                if (item.id !== itemId) return item;
-                return { ...item, bought: !item.bought };
+            const response = await apiPost({
+                action: "setItemComprado",
+                item_id: itemId,
+                comprado: !currentValue,
+                user_id: currentUserId
             });
 
-            setList(updated);
-            renderAll();
+            if (!response.ok) {
+                window.alert(response.error || "No se pudo actualizar el estado del producto.");
+                return;
+            }
+
+            await refreshListsAndItems();
         }
 
-        function copyItem(fromType, itemId) {
-            const fromList = fromType === "private" ? getPrivateList() : getCommonList();
-            const item = fromList.find((x) => x.id === itemId);
+        function findItemInUi(listType, itemId) {
+            const source = listType === "private" ? privateItems : commonItems;
+            return source.find((item) => item.id === itemId) || null;
+        }
+
+        async function copyItem(fromType, itemId) {
+            const item = findItemInUi(fromType, itemId);
             if (!item) return;
 
-            const targetType = fromType === "private" ? "common" : "private";
-            const targetList = targetType === "private" ? getPrivateList() : getCommonList();
-            targetList.push({ ...item, id: uid(), bought: false, createdAt: Date.now() });
+            const targetListId = fromType === "private" ? commonListId : privateListId;
+            if (!targetListId) {
+                window.alert("La lista de destino no existe para este usuario.");
+                return;
+            }
 
-            if (targetType === "private") setPrivateList(targetList);
-            else setCommonList(targetList);
+            const nowIso = new Date().toISOString();
+            const response = await apiPost({
+                action: "addItem",
+                item: {
+                    item_id: uid("item"),
+                    lista_id: targetListId,
+                    nombre_producto: item.name,
+                    categoria: item.category,
+                    cantidad: "",
+                    unidad: "",
+                    comprado: "false",
+                    comprado_en: "",
+                    comprado_por_user_id: "",
+                    orden_supermercado: "",
+                    notas: "",
+                    creado_por_user_id: currentUserId,
+                    creado_en: nowIso,
+                    actualizado_en: nowIso,
+                    eliminado: "false"
+                }
+            });
 
-            renderAll();
+            if (!response.ok) {
+                window.alert(response.error || "No se pudo copiar el producto.");
+                return;
+            }
+
+            await refreshListsAndItems();
         }
 
-        function moveItem(fromType, itemId) {
-            const fromList = fromType === "private" ? getPrivateList() : getCommonList();
-            const index = fromList.findIndex((x) => x.id === itemId);
-            if (index < 0) return;
-
-            const [item] = fromList.splice(index, 1);
-            if (fromType === "private") setPrivateList(fromList);
-            else setCommonList(fromList);
-
-            const targetType = fromType === "private" ? "common" : "private";
-            const targetList = targetType === "private" ? getPrivateList() : getCommonList();
-            targetList.push({ ...item, bought: false });
-
-            if (targetType === "private") setPrivateList(targetList);
-            else setCommonList(targetList);
-
-            renderAll();
+        async function moveItem(fromType, itemId) {
+            await copyItem(fromType, itemId);
+            await deleteItem(itemId);
         }
 
-        function deleteItem(listType, itemId) {
-            const list = listType === "private" ? getPrivateList() : getCommonList();
-            const updated = list.filter((item) => item.id !== itemId);
+        async function deleteItem(itemId) {
+            const response = await apiPost({
+                action: "deleteItem",
+                item_id: itemId,
+                user_id: currentUserId
+            });
 
-            if (listType === "private") setPrivateList(updated);
-            else setCommonList(updated);
+            if (!response.ok) {
+                window.alert(response.error || "No se pudo eliminar el producto.");
+                return;
+            }
 
-            renderAll();
+            await refreshListsAndItems();
         }
 
-        function clearShopping() {
-            const confirmText = "Se vaciará tu lista personal y la lista común. ¿Continuar?";
-            if (!window.confirm(confirmText)) return;
+        async function clearShopping() {
+            if (!window.confirm("Se vaciará tu lista personal y la lista común. ¿Continuar?")) return;
 
-            setPrivateList([]);
-            setCommonList([]);
-            renderAll();
+            const allIds = [...privateItems, ...commonItems].map((item) => item.id);
+            for (const itemId of allIds) {
+                await apiPost({
+                    action: "deleteItem",
+                    item_id: itemId,
+                    user_id: currentUserId
+                });
+            }
+
+            await refreshListsAndItems();
         }
 
         function startVoiceInput() {
@@ -746,52 +786,46 @@
             recognition.start();
         }
 
-        function setupSelectors() {
-            userSelect.innerHTML = "";
-            users.forEach((user) => {
-                const option = document.createElement("option");
-                option.value = user.id;
-                option.textContent = user.name;
-                userSelect.appendChild(option);
-            });
-
-            if (!users.some((u) => u.id === currentUserId)) {
-                currentUserId = users[0].id;
-                localStorage.setItem(STORAGE_USER_KEY, currentUserId);
+        function addUser() {
+            const openSheet = window.confirm("Los usuarios se gestionan desde Google Sheets. ¿Abrir hoja Usuarios?");
+            if (openSheet) {
+                window.open(SHEET_USUARIOS_URL, "_blank", "noopener,noreferrer");
             }
-            userSelect.value = currentUserId;
-
-            inputCategory.innerHTML = "";
-            CATEGORIES.forEach((category) => {
-                const option = document.createElement("option");
-                option.value = category;
-                option.textContent = category;
-                inputCategory.appendChild(option);
-            });
-            inputCategory.value = "Despensa";
         }
 
-        userSelect.addEventListener("change", () => {
+        userSelect.addEventListener("change", async () => {
             currentUserId = userSelect.value;
             localStorage.setItem(STORAGE_USER_KEY, currentUserId);
-            renderAll();
+            await refreshListsAndItems();
         });
 
-        btnAdd.addEventListener("click", addItem);
+        btnAdd.addEventListener("click", () => { addItem().catch(showFatalError); });
         btnAddUser.addEventListener("click", addUser);
         btnVoice.addEventListener("click", startVoiceInput);
-        btnClear.addEventListener("click", clearShopping);
+        btnClear.addEventListener("click", () => { clearShopping().catch(showFatalError); });
         btnSuper.addEventListener("click", () => {
             supermarketMode = !supermarketMode;
             renderAll();
         });
 
         inputProduct.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter") addItem();
+            if (ev.key === "Enter") {
+                addItem().catch(showFatalError);
+            }
         });
 
-        setupSelectors();
-        renderAll();
+        function showFatalError(error) {
+            console.error(error);
+            window.alert("Error de conexion con la API. Revisa el despliegue de Apps Script y permisos de la Web App.");
+        }
+
+        async function init() {
+            setupCategorySelector();
+            await loadUsersFromApi();
+            await refreshListsAndItems();
+        }
+
+        init().catch(showFatalError);
     </script>
 </body>
 </html>
