@@ -819,6 +819,76 @@
                 .filter(Boolean);
         }
 
+        const ingredientEmojis = {
+            "tomate": "🍅", "tomates": "🍅",
+            "cebolla": "🧅", "cebollas": "🧅",
+            "ajo": "🧄",
+            "queso": "🧀",
+            "huevo": "🥚", "huevos": "🥚", "egg": "🥚",
+            "pollo": "🍗", "pechugas": "🍗",
+            "carne": "🥩", "res": "🥩", "ternera": "🥩",
+            "pescado": "🐟", "salmón": "🐟", "trucha": "🐟",
+            "camarón": "🦐", "camarones": "🦐", "gamba": "🦐",
+            "lechuga": "🥬", "lechuciga": "🥬",
+            "espinaca": "🥬", "espinacas": "🥬",
+            "brócoli": "🥦", "brocoli": "🥦",
+            "coliflor": "🥦",
+            "zanahoria": "🥕", "zanahorias": "🥕",
+            "patata": "🥔", "patatas": "🥔", "papa": "🥔", "papas": "🥔",
+            "champiñón": "🍄", "champiñones": "🍄", "seta": "🍄", "setas": "🍄",
+            "pimienta": "🫑", "pimiento": "🫑", "pimientos": "🫑", "ají": "🫑",
+            "pan": "🍞",
+            "pasta": "🍝", "tallarín": "🍝", "fideos": "🍝",
+            "arroz": "🍚",
+            "leche": "🥛", "yogur": "🥛", "crema": "🥛", "nata": "🥛",
+            "mantequilla": "🧈", "butter": "🧈",
+            "miel": "🍯",
+            "aceite": "🫒", "aceite de oliva": "🫒",
+            "sal": "🧂",
+            "limón": "🍋", "zumo de limón": "🍋",
+            "naranja": "🍊", "zumo de naranja": "🍊",
+            "fresa": "🍓", "fresas": "🍓",
+            "plátano": "🍌", "platano": "🍌",
+            "manzana": "🍎",
+            "pera": "🍐",
+            "piña": "🍍",
+            "sandía": "🍉",
+            "uva": "🍇", "uvas": "🍇",
+            "caldo": "🍲", "caldo de carne": "🍲", "caldo de pollo": "🍲",
+            "sopa": "🍲",
+            "orégano": "🌿", "oregano": "🌿",
+            "perejil": "🌿",
+            "basílico": "🌿", "basilico": "🌿",
+            "cilantro": "🌿",
+            "romero": "🌿",
+            "tomillo": "🌿",
+            "albahaca": "🌿",
+            "agua": "💧",
+            "vino": "🍷",
+            "cerveza": "🍺",
+            "especias": "🌶️", "picante": "🌶️",
+            "azúcar": "🍬", "azucar": "🍬",
+            "chocolate": "🍫",
+            "café": "☕", "cafe": "☕",
+            "té": "🫖", "te": "🫖"
+        };
+
+        function getIngredientEmoji(ingredient) {
+            const lower = String(ingredient).toLowerCase().trim();
+            for (const [keyword, emoji] of Object.entries(ingredientEmojis)) {
+                if (lower.includes(keyword)) {
+                    return emoji;
+                }
+            }
+            return "🥘";
+        }
+
+        function formatIngredientsWithEmojis(ingredientsList) {
+            return ingredientsList
+                .map((ing) => getIngredientEmoji(ing) + " " + ing)
+                .join("<br>");
+        }
+
         function getCategories() {
             const set = new Set(["Todas"]);
             recipes.forEach((recipe) => set.add(recipe.category || "Otro"));
@@ -1052,7 +1122,7 @@
 
             viewTitle.textContent = recipe.name;
             viewMeta.innerHTML = "<span>Categoria: " + (recipe.category || "Otro") + "</span> <span>Tiempo: " + (recipe.time ? (recipe.time + " min") : "N/D") + "</span> <span>Raciones: " + (recipe.servings || "N/D") + "</span>";
-            viewIngredients.textContent = splitIngredients(recipe.ingredients).join("\n") || "Sin ingredientes";
+            viewIngredients.innerHTML = formatIngredientsWithEmojis(splitIngredients(recipe.ingredients)) || "Sin ingredientes";
             viewSteps.textContent = recipe.steps || "Sin preparacion";
             viewNotes.textContent = recipe.notes || "Sin notas por ahora.";
             
@@ -1217,7 +1287,7 @@
 
             printTitle.textContent = recipe.name;
             printMeta.innerHTML = "<span><strong>Categoria:</strong> " + (recipe.category || "Otro") + "</span> | <span><strong>Tiempo:</strong> " + (recipe.time ? (recipe.time + " min") : "N/D") + "</span> | <span><strong>Raciones:</strong> " + (recipe.servings || "N/D") + "</span>";
-            printIngredientsText.textContent = splitIngredients(recipe.ingredients).join("\n") || "Sin ingredientes";
+            printIngredientsText.innerHTML = formatIngredientsWithEmojis(splitIngredients(recipe.ingredients)) || "Sin ingredientes";
             printStepsText.textContent = recipe.steps || "Sin preparacion";
             printNotesText.textContent = recipe.notes || "Sin notas por ahora.";
 
