@@ -74,7 +74,7 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
-            display: flex;
+            display: none;
             gap: 8px;
             align-items: center;
             padding: 8px 10px;
@@ -137,14 +137,6 @@
     </style>
 </head>
 <body>
-    <div class="controls">
-        <label>
-            <input type="checkbox" id="editMode">
-            Modo ajuste
-        </label>
-        <button id="resetZones" type="button">Reiniciar zonas</button>
-    </div>
-
     <main class="index-screen">
         <a class="interactive-zone zone1" data-zone="zone1" href="./vistas/mi-lista.html" aria-label="Ir a Mi lista"></a>
         <a class="interactive-zone zone2" data-zone="zone2" href="./vistas/nuestras-recetas.html" aria-label="Ir a Nuestras recetas"></a>
