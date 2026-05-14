@@ -75,6 +75,20 @@
             align-items: center;
             flex-wrap: wrap;
         }
+        .user-line {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 8px;
+            align-items: center;
+            width: 100%;
+        }
+        .user-line label {
+            margin-right: 2px;
+        }
+        .user-line select {
+            width: 100%;
+            min-width: 0;
+        }
         label {
             font-size: 0.85rem;
             font-weight: 700;
@@ -110,6 +124,18 @@
         .btn-primary { background: linear-gradient(135deg, #34a853, #2f80ed); }
         .btn-secondary { background: linear-gradient(135deg, #ff9800, #f57c00); }
         .btn-danger { background: linear-gradient(135deg, #ef5350, #e53935); }
+        .btn-icon {
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            border-radius: 12px;
+            font-size: 1.22rem;
+            line-height: 1;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #26a69a, #00897b);
+        }
         .btn-ghost {
             color: #1f3d32;
             border: 1px solid #b7d6c1;
@@ -239,12 +265,13 @@
     </header>
     <main class="app">
         <section class="toolbar panel">
-            <div class="row">
+            <div class="user-line">
                 <label for="userSelect">Usuario activo:</label>
                 <select id="userSelect" aria-label="Seleccionar usuario"></select>
-                <button id="btnSuper" class="btn btn-secondary" type="button">Modo Supermercado: OFF</button>
+                <button id="btnAddUser" class="btn btn-icon" type="button" aria-label="Añadir usuario" title="Añadir usuario">+</button>
             </div>
             <div class="row">
+                <button id="btnSuper" class="btn btn-secondary" type="button">Modo Supermercado: OFF</button>
                 <input id="inputProduct" class="input-product" type="text" placeholder="Añadir producto (ej: Leche)" aria-label="Nombre del producto">
                 <select id="inputCategory" aria-label="Categoría del producto"></select>
                 <select id="inputTarget" aria-label="Destino del producto">
@@ -300,13 +327,14 @@
             "Otros"
         ];
 
-        const USERS = [
+        const DEFAULT_USERS = [
             { id: "linguz-mama", name: "Mamá" },
             { id: "linguz-papa", name: "Papá" },
             { id: "linguz-hija", name: "Hija" },
             { id: "linguz-hijo", name: "Hijo" }
         ];
 
+        const STORAGE_USERS_KEY = "linguz-shopping-users";
         const STORAGE_USER_KEY = "linguz-shopping-user";
         const STORAGE_PRIVATE_PREFIX = "linguz-shopping-private-";
         const STORAGE_COMMON_KEY = "linguz-shopping-common";
@@ -316,6 +344,7 @@
         const inputCategory = document.getElementById("inputCategory");
         const inputTarget = document.getElementById("inputTarget");
         const btnAdd = document.getElementById("btnAdd");
+        const btnAddUser = document.getElementById("btnAddUser");
         const btnVoice = document.getElementById("btnVoice");
         const btnSuper = document.getElementById("btnSuper");
         const btnClear = document.getElementById("btnClear");
@@ -323,16 +352,74 @@
         const privateListEl = document.getElementById("privateList");
         const commonListEl = document.getElementById("commonList");
 
+        let users = loadUsers();
         let supermarketMode = false;
-        let currentUserId = localStorage.getItem(STORAGE_USER_KEY) || USERS[0].id;
+        let currentUserId = localStorage.getItem(STORAGE_USER_KEY) || users[0].id;
 
         function uid() {
             return "id-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
         }
 
+        function slugifyName(name) {
+            return name
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+                .slice(0, 24);
+        }
+
+        function loadUsers() {
+            const raw = localStorage.getItem(STORAGE_USERS_KEY);
+            if (!raw) return [...DEFAULT_USERS];
+            try {
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed) || !parsed.length) return [...DEFAULT_USERS];
+                return parsed.filter((u) => u && u.id && u.name);
+            } catch {
+                return [...DEFAULT_USERS];
+            }
+        }
+
+        function saveUsers() {
+            localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(users));
+        }
+
         function getUserName(userId) {
-            const user = USERS.find((u) => u.id === userId);
+            const user = users.find((u) => u.id === userId);
             return user ? user.name : "Usuario";
+        }
+
+        function addUser() {
+            const name = (window.prompt("Nombre del nuevo usuario:") || "").trim();
+            if (!name) return;
+
+            const baseId = "linguz-" + slugifyName(name);
+            if (!baseId || baseId === "linguz-") {
+                window.alert("Nombre no válido.");
+                return;
+            }
+
+            const duplicateName = users.some((u) => u.name.toLowerCase() === name.toLowerCase());
+            if (duplicateName) {
+                window.alert("Ese usuario ya existe.");
+                return;
+            }
+
+            let finalId = baseId;
+            let suffix = 2;
+            while (users.some((u) => u.id === finalId)) {
+                finalId = baseId + "-" + suffix;
+                suffix += 1;
+            }
+
+            users.push({ id: finalId, name });
+            saveUsers();
+            currentUserId = finalId;
+            localStorage.setItem(STORAGE_USER_KEY, currentUserId);
+            setupSelectors();
+            renderAll();
         }
 
         function loadList(key) {
@@ -593,12 +680,17 @@
 
         function setupSelectors() {
             userSelect.innerHTML = "";
-            USERS.forEach((user) => {
+            users.forEach((user) => {
                 const option = document.createElement("option");
                 option.value = user.id;
                 option.textContent = user.name;
                 userSelect.appendChild(option);
             });
+
+            if (!users.some((u) => u.id === currentUserId)) {
+                currentUserId = users[0].id;
+                localStorage.setItem(STORAGE_USER_KEY, currentUserId);
+            }
             userSelect.value = currentUserId;
 
             inputCategory.innerHTML = "";
@@ -618,6 +710,7 @@
         });
 
         btnAdd.addEventListener("click", addItem);
+        btnAddUser.addEventListener("click", addUser);
         btnVoice.addEventListener("click", startVoiceInput);
         btnClear.addEventListener("click", clearShopping);
         btnSuper.addEventListener("click", () => {
