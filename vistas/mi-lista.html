@@ -50,37 +50,184 @@
             backdrop-filter: blur(4px);
         }
         .btn-back:hover { background: rgba(255,255,255,0.4); transform: scale(1.04); }
-        .construction {
+        .app {
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 14px;
+            padding: 14px 14px 20px;
+        }
+        .toolbar {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .row {
+            display: flex;
+            gap: 8px;
             align-items: center;
-            padding: 40px 24px;
-            gap: 16px;
+            flex-wrap: wrap;
         }
-        .construction-icon { font-size: 4rem; }
-        .construction h2 {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: #f57c00;
-            text-align: center;
-        }
-        .construction p {
-            font-size: 1rem;
-            color: #78909c;
-            text-align: center;
-            line-height: 1.6;
-        }
-        .badge {
-            background: linear-gradient(135deg, #ffa726, #ffcc02);
-            color: #fff;
-            padding: 8px 24px;
-            border-radius: 50px;
-            font-weight: 800;
+        label {
             font-size: 0.85rem;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 12px rgba(255,167,38,0.4);
+            font-weight: 700;
+            color: #2e5b4a;
+        }
+        select,
+        input,
+        button {
+            font-family: 'Nunito', sans-serif;
+        }
+        select,
+        input {
+            border: 1px solid #b7d6c1;
+            border-radius: 10px;
+            padding: 9px 10px;
+            font-size: 0.92rem;
+            background: #fff;
+            color: #1f3d32;
+        }
+        .input-product {
+            flex: 1;
+            min-width: 150px;
+        }
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.86rem;
+            font-weight: 800;
+            cursor: pointer;
+            color: #fff;
+        }
+        .btn-primary { background: linear-gradient(135deg, #34a853, #2f80ed); }
+        .btn-secondary { background: linear-gradient(135deg, #ff9800, #f57c00); }
+        .btn-danger { background: linear-gradient(135deg, #ef5350, #e53935); }
+        .btn-ghost {
+            color: #1f3d32;
+            border: 1px solid #b7d6c1;
+            background: #fff;
+            padding: 7px 9px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .clear-btn-wrap {
+            display: flex;
+            justify-content: center;
+        }
+        .btn-clear-list {
+            width: min(560px, 95%);
+            padding: 12px 14px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            border: 0;
+            color: #fff;
+            font-size: 0.87rem;
+            font-weight: 800;
+            cursor: pointer;
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            box-shadow: 0 8px 18px rgba(211, 47, 47, 0.28);
+        }
+        .lists {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .list-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 18px;
+            padding: 12px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.07);
+        }
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .list-header h2 {
+            font-size: 1rem;
+            color: #1f3d32;
+            font-weight: 800;
+        }
+        .pill {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #fff;
+            border-radius: 999px;
+            padding: 4px 9px;
+        }
+        .pill.private { background: #43a047; }
+        .pill.common { background: #1e88e5; }
+        .group-title {
+            margin-top: 10px;
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+            color: #49685b;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+            background: #f8fbf9;
+            border: 1px solid #d9e9df;
+            border-radius: 10px;
+            padding: 8px;
+        }
+        .item-name {
+            font-size: 0.94rem;
+            color: #203a31;
+            font-weight: 700;
+        }
+        .item-meta {
+            font-size: 0.76rem;
+            color: #5f7a70;
+            margin-top: 2px;
+        }
+        .item-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .item.is-bought .item-name {
+            text-decoration: line-through;
+            opacity: 0.62;
+        }
+        .muted {
+            font-size: 0.82rem;
+            color: #607d73;
+            text-align: center;
+            padding: 8px 0;
+        }
+        .voice-note {
+            font-size: 0.75rem;
+            color: #5c756a;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+        @media (min-width: 900px) {
+            .lists { grid-template-columns: 1fr 1fr; }
         }
         header { background: linear-gradient(135deg, #66bb6a, #42a5f5); }
     </style>
@@ -90,9 +237,398 @@
         <h1>🛒 MI LISTA DE LA COMPRA</h1>
         <a class="btn-back" href="../index.html">🏠 Volver al inicio</a>
     </header>
-    <section class="construction">
-        <!-- Contenido eliminado para dar comienzo a la nueva vista -->
-    </section>
+    <main class="app">
+        <section class="toolbar panel">
+            <div class="row">
+                <label for="userSelect">Usuario activo:</label>
+                <select id="userSelect" aria-label="Seleccionar usuario"></select>
+                <button id="btnSuper" class="btn btn-secondary" type="button">Modo Supermercado: OFF</button>
+            </div>
+            <div class="row">
+                <input id="inputProduct" class="input-product" type="text" placeholder="Añadir producto (ej: Leche)" aria-label="Nombre del producto">
+                <select id="inputCategory" aria-label="Categoría del producto"></select>
+                <select id="inputTarget" aria-label="Destino del producto">
+                    <option value="private">Lista personal</option>
+                    <option value="common">Lista común</option>
+                </select>
+                <button id="btnAdd" class="btn btn-primary" type="button">Añadir</button>
+                <button id="btnVoice" class="btn btn-primary" type="button">Añadir por voz</button>
+            </div>
+            <div class="voice-note">
+                Integración directa con Google Assistant/Alexa requiere servicios externos. Esta primera versión permite dictado por voz en navegadores compatibles.
+            </div>
+        </section>
+
+        <div class="clear-btn-wrap">
+            <button id="btnClear" class="btn-clear-list" type="button">LIMPIAR LISTA DE LA COMPRA</button>
+        </div>
+
+        <section class="lists">
+            <article class="list-card">
+                <div class="list-header">
+                    <h2 id="privateTitle">Lista personal</h2>
+                    <span class="pill private">PRIVADA</span>
+                </div>
+                <div id="privateList"></div>
+            </article>
+
+            <article class="list-card">
+                <div class="list-header">
+                    <h2>Lista común de la casa</h2>
+                    <span class="pill common">COMÚN</span>
+                </div>
+                <div id="commonList"></div>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        const CATEGORIES = [
+            "Frutería",
+            "Verdulería",
+            "Carnicería",
+            "Pescadería",
+            "Lácteos",
+            "Panadería",
+            "Despensa",
+            "Congelados",
+            "Bebidas",
+            "Limpieza",
+            "Higiene"
+        ];
+
+        const USERS = [
+            { id: "linguz-mama", name: "Mamá" },
+            { id: "linguz-papa", name: "Papá" },
+            { id: "linguz-hija", name: "Hija" },
+            { id: "linguz-hijo", name: "Hijo" }
+        ];
+
+        const STORAGE_USER_KEY = "linguz-shopping-user";
+        const STORAGE_PRIVATE_PREFIX = "linguz-shopping-private-";
+        const STORAGE_COMMON_KEY = "linguz-shopping-common";
+
+        const userSelect = document.getElementById("userSelect");
+        const inputProduct = document.getElementById("inputProduct");
+        const inputCategory = document.getElementById("inputCategory");
+        const inputTarget = document.getElementById("inputTarget");
+        const btnAdd = document.getElementById("btnAdd");
+        const btnVoice = document.getElementById("btnVoice");
+        const btnSuper = document.getElementById("btnSuper");
+        const btnClear = document.getElementById("btnClear");
+        const privateTitle = document.getElementById("privateTitle");
+        const privateListEl = document.getElementById("privateList");
+        const commonListEl = document.getElementById("commonList");
+
+        let supermarketMode = false;
+        let currentUserId = localStorage.getItem(STORAGE_USER_KEY) || USERS[0].id;
+
+        function uid() {
+            return "id-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+        }
+
+        function getUserName(userId) {
+            const user = USERS.find((u) => u.id === userId);
+            return user ? user.name : "Usuario";
+        }
+
+        function loadList(key) {
+            const raw = localStorage.getItem(key);
+            if (!raw) return [];
+            try {
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function saveList(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        function getPrivateKey(userId) {
+            return STORAGE_PRIVATE_PREFIX + userId;
+        }
+
+        function getPrivateList() {
+            return loadList(getPrivateKey(currentUserId));
+        }
+
+        function setPrivateList(data) {
+            saveList(getPrivateKey(currentUserId), data);
+        }
+
+        function getCommonList() {
+            return loadList(STORAGE_COMMON_KEY);
+        }
+
+        function setCommonList(data) {
+            saveList(STORAGE_COMMON_KEY, data);
+        }
+
+        function sortForMarket(items) {
+            return [...items].sort((a, b) => Number(a.bought) - Number(b.bought));
+        }
+
+        function groupByCategory(items) {
+            const groups = {};
+            CATEGORIES.forEach((cat) => { groups[cat] = []; });
+
+            items.forEach((item) => {
+                const category = CATEGORIES.includes(item.category) ? item.category : "Despensa";
+                if (!groups[category]) groups[category] = [];
+                groups[category].push(item);
+            });
+
+            return groups;
+        }
+
+        function renderList(items, listType) {
+            const grouped = groupByCategory(sortForMarket(items));
+            const root = listType === "private" ? privateListEl : commonListEl;
+            root.innerHTML = "";
+
+            const hasAny = items.length > 0;
+            if (!hasAny) {
+                root.innerHTML = '<p class="muted">Sin productos por ahora.</p>';
+                return;
+            }
+
+            CATEGORIES.forEach((category) => {
+                const bucket = grouped[category] || [];
+                if (!bucket.length) return;
+
+                const title = document.createElement("div");
+                title.className = "group-title";
+                title.textContent = category;
+                root.appendChild(title);
+
+                const itemsWrap = document.createElement("div");
+                itemsWrap.className = "items";
+
+                bucket.forEach((item) => {
+                    const row = document.createElement("div");
+                    row.className = "item" + (item.bought ? " is-bought" : "");
+
+                    const info = document.createElement("div");
+                    const name = document.createElement("div");
+                    name.className = "item-name";
+                    name.textContent = item.name;
+
+                    const meta = document.createElement("div");
+                    meta.className = "item-meta";
+                    meta.textContent = item.bought ? "Comprado" : "Pendiente";
+
+                    info.appendChild(name);
+                    info.appendChild(meta);
+
+                    const actions = document.createElement("div");
+                    actions.className = "item-actions";
+
+                    const toggleBtn = document.createElement("button");
+                    toggleBtn.className = "btn-ghost";
+                    toggleBtn.textContent = item.bought ? "Desmarcar" : "Marcar";
+                    toggleBtn.addEventListener("click", () => toggleBought(listType, item.id));
+
+                    const copyBtn = document.createElement("button");
+                    copyBtn.className = "btn-ghost";
+                    copyBtn.textContent = listType === "private" ? "Copiar a común" : "Copiar a personal";
+                    copyBtn.addEventListener("click", () => copyItem(listType, item.id));
+
+                    const moveBtn = document.createElement("button");
+                    moveBtn.className = "btn-ghost";
+                    moveBtn.textContent = listType === "private" ? "Mover a común" : "Mover a personal";
+                    moveBtn.addEventListener("click", () => moveItem(listType, item.id));
+
+                    const delBtn = document.createElement("button");
+                    delBtn.className = "btn-ghost";
+                    delBtn.textContent = "Eliminar";
+                    delBtn.addEventListener("click", () => deleteItem(listType, item.id));
+
+                    actions.appendChild(toggleBtn);
+                    actions.appendChild(copyBtn);
+                    actions.appendChild(moveBtn);
+                    actions.appendChild(delBtn);
+
+                    row.appendChild(info);
+                    row.appendChild(actions);
+                    itemsWrap.appendChild(row);
+                });
+
+                root.appendChild(itemsWrap);
+            });
+        }
+
+        function renderAll() {
+            privateTitle.textContent = "Lista personal de " + getUserName(currentUserId);
+            renderList(getPrivateList(), "private");
+            renderList(getCommonList(), "common");
+            btnSuper.textContent = "Modo Supermercado: " + (supermarketMode ? "ON" : "OFF");
+        }
+
+        function addItem() {
+            const name = inputProduct.value.trim();
+            if (!name) return;
+
+            const newItem = {
+                id: uid(),
+                name,
+                category: inputCategory.value,
+                bought: false,
+                createdAt: Date.now()
+            };
+
+            if (inputTarget.value === "private") {
+                const list = getPrivateList();
+                list.push(newItem);
+                setPrivateList(list);
+            } else {
+                const list = getCommonList();
+                list.push(newItem);
+                setCommonList(list);
+            }
+
+            inputProduct.value = "";
+            inputProduct.focus();
+            renderAll();
+        }
+
+        function toggleBought(listType, itemId) {
+            if (!supermarketMode) return;
+
+            const getList = listType === "private" ? getPrivateList : getCommonList;
+            const setList = listType === "private" ? setPrivateList : setCommonList;
+
+            const list = getList();
+            const updated = list.map((item) => {
+                if (item.id !== itemId) return item;
+                return { ...item, bought: !item.bought };
+            });
+
+            setList(updated);
+            renderAll();
+        }
+
+        function copyItem(fromType, itemId) {
+            const fromList = fromType === "private" ? getPrivateList() : getCommonList();
+            const item = fromList.find((x) => x.id === itemId);
+            if (!item) return;
+
+            const targetType = fromType === "private" ? "common" : "private";
+            const targetList = targetType === "private" ? getPrivateList() : getCommonList();
+            targetList.push({ ...item, id: uid(), bought: false, createdAt: Date.now() });
+
+            if (targetType === "private") setPrivateList(targetList);
+            else setCommonList(targetList);
+
+            renderAll();
+        }
+
+        function moveItem(fromType, itemId) {
+            const fromList = fromType === "private" ? getPrivateList() : getCommonList();
+            const index = fromList.findIndex((x) => x.id === itemId);
+            if (index < 0) return;
+
+            const [item] = fromList.splice(index, 1);
+            if (fromType === "private") setPrivateList(fromList);
+            else setCommonList(fromList);
+
+            const targetType = fromType === "private" ? "common" : "private";
+            const targetList = targetType === "private" ? getPrivateList() : getCommonList();
+            targetList.push({ ...item, bought: false });
+
+            if (targetType === "private") setPrivateList(targetList);
+            else setCommonList(targetList);
+
+            renderAll();
+        }
+
+        function deleteItem(listType, itemId) {
+            const list = listType === "private" ? getPrivateList() : getCommonList();
+            const updated = list.filter((item) => item.id !== itemId);
+
+            if (listType === "private") setPrivateList(updated);
+            else setCommonList(updated);
+
+            renderAll();
+        }
+
+        function clearShopping() {
+            const confirmText = "Se vaciará tu lista personal y la lista común. ¿Continuar?";
+            if (!window.confirm(confirmText)) return;
+
+            setPrivateList([]);
+            setCommonList([]);
+            renderAll();
+        }
+
+        function startVoiceInput() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                window.alert("Tu navegador no soporta reconocimiento de voz en esta versión.");
+                return;
+            }
+
+            const recognition = new SR();
+            recognition.lang = "es-ES";
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript || "";
+                inputProduct.value = transcript.trim();
+                inputProduct.focus();
+            };
+
+            recognition.onerror = () => {
+                window.alert("No se pudo capturar la voz. Intenta de nuevo.");
+            };
+
+            recognition.start();
+        }
+
+        function setupSelectors() {
+            userSelect.innerHTML = "";
+            USERS.forEach((user) => {
+                const option = document.createElement("option");
+                option.value = user.id;
+                option.textContent = user.name;
+                userSelect.appendChild(option);
+            });
+            userSelect.value = currentUserId;
+
+            inputCategory.innerHTML = "";
+            CATEGORIES.forEach((category) => {
+                const option = document.createElement("option");
+                option.value = category;
+                option.textContent = category;
+                inputCategory.appendChild(option);
+            });
+            inputCategory.value = "Despensa";
+        }
+
+        userSelect.addEventListener("change", () => {
+            currentUserId = userSelect.value;
+            localStorage.setItem(STORAGE_USER_KEY, currentUserId);
+            renderAll();
+        });
+
+        btnAdd.addEventListener("click", addItem);
+        btnVoice.addEventListener("click", startVoiceInput);
+        btnClear.addEventListener("click", clearShopping);
+        btnSuper.addEventListener("click", () => {
+            supermarketMode = !supermarketMode;
+            renderAll();
+        });
+
+        inputProduct.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") addItem();
+        });
+
+        setupSelectors();
+        renderAll();
+    </script>
 </body>
 </html>
 
