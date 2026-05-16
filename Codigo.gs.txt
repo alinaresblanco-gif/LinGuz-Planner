@@ -261,6 +261,16 @@ function guardarReceta(data) {
   return { ok: true, mensaje: "Receta guardada exitosamente" };
 }
 
+/** API: Obtener todas las recetas de la hoja "nuestras_recetas" */
+function apiGetRecetas() {
+  return readSheet('nuestras_recetas');
+}
+
+/** API: Obtener todos los items de la hoja "Items" */
+function apiGetItems() {
+  return readSheet(SHEET_ITEMS);
+}
+
 function parseJsonBody(e) {
   if (!e || !e.postData || !e.postData.contents) return {};
   try {
@@ -332,6 +342,10 @@ function routeAction(action, params) {
           params.pin_hash || ''
         );
 
+      case 'getRecetas':
+        return { ok: true, data: apiGetRecetas() };
+      case 'getItems':
+        return { ok: true, data: apiGetItems() };
       default:
         return {
           ok: false,
@@ -348,7 +362,9 @@ function routeAction(action, params) {
             'getUsuario',
             'usuariosHogar',
             'getHogar',
-            'createUsuario'
+            'createUsuario',
+            'getRecetas',
+            'getItems'
           ]
         };
     }
@@ -365,14 +381,10 @@ function doGet(e) {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-
-    // Verificar el endpoint solicitado
-    if (data.endpoint === "guardarReceta") {
-      const resultado = guardarReceta(data.payload);
-      return ContentService.createTextOutput(JSON.stringify(resultado)).setMimeType(ContentService.MimeType.JSON);
-    } else {
-      throw new Error("Endpoint no válido");
-    }
+    if (!data.endpoint) throw new Error("Falta endpoint");
+    // Llama a la función de ruteo general
+    const resultado = routeAction(data.endpoint, data.payload || {});
+    return ContentService.createTextOutput(JSON.stringify(resultado)).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: error.message })).setMimeType(ContentService.MimeType.JSON);
   }
