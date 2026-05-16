@@ -228,21 +228,31 @@ function apiCreateUsuario(hogar_id, nombre_visible, email, pin_hash) {
 function guardarReceta(data) {
   const sheet = getSheet('nuestras_recetas');
 
+  // Aceptar nombres de campos en inglés (del HTML) o español
+  const nombre = data.nombre || data.name || "";
+  const categoria = data.categoria || data.category || "";
+  const tiempo = data.tiempo || data.time || "";
+  const raciones = data.raciones || data.servings || "";
+  const ingredientes = data.ingredientes || data.ingredients || "";
+  const preparacion = data.preparacion || data.steps || "";
+  const notas = data.notas || data.notes || "";
+  const imagen = data.imagen || data.imageData || "";
+
   // Validar que los datos requeridos estén presentes
-  if (!data.nombre || !data.categoria || !data.ingredientes || !data.preparacion) {
+  if (!nombre || !categoria || !ingredientes || !preparacion) {
     throw new Error("Faltan campos obligatorios: nombre, categoria, ingredientes o preparacion");
   }
 
   // Preparar los datos para insertar en la hoja
   const nuevaFila = [
-    data.nombre || "",
-    data.categoria || "",
-    data.tiempo || "",
-    data.raciones || "",
-    data.ingredientes || "",
-    data.preparacion || "",
-    data.notas || "",
-    data.imagen || ""
+    nombre,
+    categoria,
+    tiempo,
+    raciones,
+    ingredientes,
+    preparacion,
+    notas,
+    imagen
   ];
 
   // Agregar la nueva fila al final de la hoja

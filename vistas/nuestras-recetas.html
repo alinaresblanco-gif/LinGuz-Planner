@@ -727,6 +727,7 @@
 
     <script>
         const STORAGE_KEY = "linguz-recetas";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbya7PvmwkmrrMKs-2OAy5RnpnI3RwIHPK5d2-6OMYD93d-zB4AU_Shb0nS6Q4N3CKIGXg/exec";
 
         const searchInput = document.getElementById("searchInput");
         const chipsWrap = document.getElementById("chips");
@@ -1179,6 +1180,7 @@
             }
 
             const now = Date.now();
+            let recipeData;
 
             if (editingId) {
                 recipes = recipes.map((recipe) => {
@@ -1196,8 +1198,9 @@
                         updatedAt: now
                     };
                 });
+                recipeData = recipes.find(r => r.id === editingId);
             } else {
-                recipes.unshift({
+                recipeData = {
                     id: uid(),
                     name,
                     category,
@@ -1209,13 +1212,49 @@
                     imageData: currentImageData,
                     createdAt: now,
                     updatedAt: now
-                });
+                };
+                recipes.unshift(recipeData);
             }
 
             saveRecipes();
+            
+            // Enviar datos al Google Sheet
+            enviarRecetaAlServidor({
+                name: recipeData.name,
+                category: recipeData.category,
+                time: recipeData.time,
+                servings: recipeData.servings,
+                ingredients: recipeData.ingredients,
+                steps: recipeData.steps,
+                notes: recipeData.notes,
+                imageData: recipeData.imageData || ""
+            });
+            
             renderChips();
             renderRecipes();
             closeRecipeModal();
+        }
+
+        function enviarRecetaAlServidor(recipeData) {
+            const payload = {
+                endpoint: "guardarReceta",
+                payload: recipeData
+            };
+
+            fetch(APPS_SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    console.log("Receta guardada en Google Sheet:", data.mensaje);
+                } else {
+                    console.error("Error guardando receta:", data.error);
+                }
+            })
+            .catch(err => console.error("Error en fetch:", err));
         }
 
         function seedIfEmpty() {
