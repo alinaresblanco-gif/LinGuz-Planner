@@ -314,9 +314,10 @@
             background: linear-gradient(to bottom, #fafffe, #f5fbf8);
             border-radius: 20px;
             box-shadow: 0 24px 50px rgba(0, 0, 0, 0.25), inset 0 0 0 3px rgba(255, 112, 67, 0.15);
-            padding: 16px;
+            padding: 16px 12px;
             border: 4px solid #ff7043;
             position: relative;
+            box-sizing: border-box;
         }
 
         .modal-content::before {
@@ -362,9 +363,11 @@
         .field input,
         .field select,
         .field textarea {
+            width: 100%;
+            box-sizing: border-box;
             border: 2px solid #c9dfd1;
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 10px 12px;
             font-size: 0.92rem;
             font-family: 'Nunito', sans-serif;
             color: var(--text-main);
@@ -514,7 +517,7 @@
         @media (max-width: 650px) {
             .modal-content {
                 width: min(90vw, 100%);
-                padding: 14px;
+                padding: 12px 10px;
             }
             .search-row {
                 grid-template-columns: 1fr;
@@ -1218,23 +1221,7 @@
         function seedIfEmpty() {
             if (recipes.length) return;
 
-            const now = Date.now();
-            recipes = [
-                {
-                    id: uid(),
-                    name: "Tortilla de patatas de la casa",
-                    category: "Tradicional",
-                    time: 35,
-                    servings: 4,
-                    ingredients: "Patatas\nHuevos\nCebolla\nSal\nAceite de oliva",
-                    steps: "Pelar y cortar patatas.\nFreir a fuego medio.\nBatir huevos, mezclar y cuajar la tortilla por ambos lados.",
-                    notes: "Version de la abuela: dejar reposar 5 minutos antes de servir.",
-                    imageData: "",
-                    createdAt: now,
-                    updatedAt: now
-                }
-            ];
-
+            recipes = [];
             saveRecipes();
         }
 
