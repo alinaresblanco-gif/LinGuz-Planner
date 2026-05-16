@@ -798,7 +798,7 @@
             if (!supermarketMode) return;
 
             const response = await apiPost({
-                action: "setItemComprado",
+                endpoint: "setItemComprado",
                 item_id: itemId,
                 comprado: !currentValue,
                 user_id: currentUserId
@@ -829,7 +829,7 @@
 
             const nowIso = new Date().toISOString();
             const response = await apiPost({
-                action: "addItem",
+                endpoint: "addItem",
                 item: {
                     item_id: uid("item"),
                     lista_id: targetListId,
@@ -864,7 +864,7 @@
 
         async function deleteItem(itemId) {
             const response = await apiPost({
-                action: "deleteItem",
+                endpoint: "deleteItem",
                 item_id: itemId,
                 user_id: currentUserId
             });
@@ -883,7 +883,7 @@
             const allIds = [...privateItems, ...commonItems].map((item) => item.id);
             for (const itemId of allIds) {
                 await apiPost({
-                    action: "deleteItem",
+                    endpoint: "deleteItem",
                     item_id: itemId,
                     user_id: currentUserId
                 });
@@ -948,7 +948,7 @@
 
             try {
                 const response = await apiPost({
-                    action: "createUsuario",
+                    endpoint: "createUsuario",
                     hogar_id: DEFAULT_HOGAR_ID,
                     nombre_visible: name,
                     email: email,
